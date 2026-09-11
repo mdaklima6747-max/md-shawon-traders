@@ -1,5 +1,5 @@
 const APP = "MD Shawon Traders";
-const VERSION = "2.4.0";
+const VERSION = "2.5.0";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -65,8 +65,11 @@ function rsi(values, period = 14) {
   for (let i = 1; i <= period; i++) {
     const diff = values[i] - values[i - 1];
 
-    if (diff > 0) gain += diff;
-    else loss -= diff;
+    if (diff > 0) {
+      gain += diff;
+    } else {
+      loss -= diff;
+    }
   }
 
   let avgGain = gain / period;
@@ -154,6 +157,7 @@ function macd(values) {
 
 /* =========================
    Candle pressure
+   CLOSED candles only
 ========================= */
 
 function pressure(candles) {
@@ -200,6 +204,7 @@ function pressure(candles) {
 
 /* =========================
    Candle pattern
+   Uses CLOSED candle
 ========================= */
 
 function candlePattern(candles) {
@@ -227,6 +232,7 @@ function candlePattern(candles) {
     Math.min(c.open, c.close) - c.low;
 
   /* Bullish engulfing */
+
   if (
     b.close < b.open &&
     c.close > c.open &&
@@ -237,6 +243,7 @@ function candlePattern(candles) {
   }
 
   /* Bearish engulfing */
+
   if (
     b.close > b.open &&
     c.close < c.open &&
@@ -247,6 +254,7 @@ function candlePattern(candles) {
   }
 
   /* Hammer */
+
   if (
     lower >= body * 2 &&
     upper <= body &&
@@ -256,6 +264,7 @@ function candlePattern(candles) {
   }
 
   /* Shooting star */
+
   if (
     upper >= body * 2 &&
     lower <= body &&
@@ -265,6 +274,7 @@ function candlePattern(candles) {
   }
 
   /* Strong bullish candle */
+
   if (
     c.close > c.open &&
     body / cRange >= 0.65
@@ -273,6 +283,7 @@ function candlePattern(candles) {
   }
 
   /* Strong bearish candle */
+
   if (
     c.close < c.open &&
     body / cRange >= 0.65
@@ -328,7 +339,9 @@ function findLevels(candles, atrValue) {
     }
   }
 
-  const price = candles.at(-1).close;
+  const price =
+    candles.at(-1).close;
+
   const tolerance =
     Math.max(
       atrValue || 0,
@@ -343,8 +356,9 @@ function findLevels(candles, atrValue) {
 
       for (const group of groups) {
         if (
-          Math.abs(group.level - level) <=
-          tolerance
+          Math.abs(
+            group.level - level
+          ) <= tolerance
         ) {
           found = group;
           break;
@@ -354,6 +368,7 @@ function findLevels(candles, atrValue) {
       if (found) {
         found.sum += level;
         found.count++;
+
         found.level =
           found.sum / found.count;
       } else {
@@ -368,30 +383,47 @@ function findLevels(candles, atrValue) {
     return groups;
   }
 
-  const sGroups = cluster(supports);
-  const rGroups = cluster(resistances);
+  const sGroups =
+    cluster(supports);
+
+  const rGroups =
+    cluster(resistances);
 
   const validSupports =
     sGroups
-      .filter(g => g.level < price)
+      .filter(
+        g => g.level < price
+      )
       .sort(
-        (a, b) => b.level - a.level
+        (a, b) =>
+          b.level - a.level
       );
 
   const validResistances =
     rGroups
-      .filter(g => g.level > price)
+      .filter(
+        g => g.level > price
+      )
       .sort(
-        (a, b) => a.level - b.level
+        (a, b) =>
+          a.level - b.level
       );
 
   const support =
     validSupports[0]?.level ??
-    Math.min(...recent.map(c => c.low));
+    Math.min(
+      ...recent.map(
+        c => c.low
+      )
+    );
 
   const resistance =
     validResistances[0]?.level ??
-    Math.max(...recent.map(c => c.high));
+    Math.max(
+      ...recent.map(
+        c => c.high
+      )
+    );
 
   return {
     support,
@@ -403,11 +435,22 @@ function findLevels(candles, atrValue) {
    Trend
 ========================= */
 
-function getTrend(e9, e21, e50, closes) {
-  const price = closes.at(-1);
+function getTrend(
+  e9,
+  e21,
+  e50,
+  closes
+) {
+  const price =
+    closes.at(-1);
 
   const previous =
-    closes[Math.max(0, closes.length - 6)];
+    closes[
+      Math.max(
+        0,
+        closes.length - 6
+      )
+    ];
 
   const slope =
     price - previous;
@@ -433,6 +476,8 @@ function getTrend(e9, e21, e50, closes) {
 
 /* =========================
    Main analysis engine
+   IMPORTANT:
+   Input must contain CLOSED candles only.
 ========================= */
 
 function analyze(input) {
@@ -457,17 +502,25 @@ function analyze(input) {
       c.low <= c.close
     )
     .sort(
-      (a, b) => a.time - b.time
+      (a, b) =>
+        a.time - b.time
     );
 
   if (candles.length < 60) {
     throw new Error(
-      `Not enough valid candles (${candles.length}); need at least 60.`
+      `Not enough valid closed candles (${candles.length}); need at least 60.`
     );
   }
 
   const close =
-    candles.map(c => c.close);
+    candles.map(
+      c => c.close
+    );
+
+  /* 
+     IMPORTANT:
+     This is now the latest CLOSED candle.
+  */
 
   const last =
     candles.at(-1);
@@ -558,14 +611,22 @@ function analyze(input) {
 
   /* Trend */
 
-  if (trend === "UPTREND") {
+  if (
+    trend === "UPTREND"
+  ) {
     buyScore += 18;
-    reasonsBuy.push("UPTREND");
+    reasonsBuy.push(
+      "UPTREND"
+    );
   }
 
-  if (trend === "DOWNTREND") {
+  if (
+    trend === "DOWNTREND"
+  ) {
     sellScore += 18;
-    reasonsSell.push("DOWNTREND");
+    reasonsSell.push(
+      "DOWNTREND"
+    );
   }
 
   /* EMA */
@@ -575,7 +636,10 @@ function analyze(input) {
     e21 > e50
   ) {
     buyScore += 12;
-    reasonsBuy.push("EMA ALIGNMENT BUY");
+
+    reasonsBuy.push(
+      "EMA ALIGNMENT BUY"
+    );
   }
 
   if (
@@ -583,19 +647,32 @@ function analyze(input) {
     e21 < e50
   ) {
     sellScore += 12;
-    reasonsSell.push("EMA ALIGNMENT SELL");
+
+    reasonsSell.push(
+      "EMA ALIGNMENT SELL"
+    );
   }
 
   /* Price vs EMA21 */
 
-  if (last.close > e21) {
+  if (
+    last.close > e21
+  ) {
     buyScore += 7;
-    reasonsBuy.push("PRICE ABOVE EMA21");
+
+    reasonsBuy.push(
+      "PRICE ABOVE EMA21"
+    );
   }
 
-  if (last.close < e21) {
+  if (
+    last.close < e21
+  ) {
     sellScore += 7;
-    reasonsSell.push("PRICE BELOW EMA21");
+
+    reasonsSell.push(
+      "PRICE BELOW EMA21"
+    );
   }
 
   /* RSI */
@@ -605,7 +682,10 @@ function analyze(input) {
     R < 70
   ) {
     buyScore += 10;
-    reasonsBuy.push("RSI BULLISH");
+
+    reasonsBuy.push(
+      "RSI BULLISH"
+    );
   }
 
   if (
@@ -613,7 +693,10 @@ function analyze(input) {
     R > 30
   ) {
     sellScore += 10;
-    reasonsSell.push("RSI BEARISH");
+
+    reasonsSell.push(
+      "RSI BEARISH"
+    );
   }
 
   /* Avoid extreme RSI */
@@ -634,7 +717,10 @@ function analyze(input) {
     M.line > M.signal
   ) {
     buyScore += 12;
-    reasonsBuy.push("MACD BULLISH");
+
+    reasonsBuy.push(
+      "MACD BULLISH"
+    );
   }
 
   if (
@@ -642,65 +728,110 @@ function analyze(input) {
     M.line < M.signal
   ) {
     sellScore += 12;
-    reasonsSell.push("MACD BEARISH");
+
+    reasonsSell.push(
+      "MACD BEARISH"
+    );
   }
 
   /* Pressure */
 
   if (
-    P.label === "STRONG BUYER"
+    P.label ===
+    "STRONG BUYER"
   ) {
     buyScore += 12;
-    reasonsBuy.push("STRONG BUYER PRESSURE");
-  } else if (
-    P.label === "BUYER"
+
+    reasonsBuy.push(
+      "STRONG BUYER PRESSURE"
+    );
+  }
+
+  else if (
+    P.label ===
+    "BUYER"
   ) {
     buyScore += 6;
-    reasonsBuy.push("BUYER PRESSURE");
+
+    reasonsBuy.push(
+      "BUYER PRESSURE"
+    );
   }
 
   if (
-    P.label === "STRONG SELLER"
+    P.label ===
+    "STRONG SELLER"
   ) {
     sellScore += 12;
-    reasonsSell.push("STRONG SELLER PRESSURE");
-  } else if (
-    P.label === "SELLER"
+
+    reasonsSell.push(
+      "STRONG SELLER PRESSURE"
+    );
+  }
+
+  else if (
+    P.label ===
+    "SELLER"
   ) {
     sellScore += 6;
-    reasonsSell.push("SELLER PRESSURE");
+
+    reasonsSell.push(
+      "SELLER PRESSURE"
+    );
   }
 
   /* Momentum */
 
-  if (momentum >= 0.7) {
+  if (
+    momentum >= 0.7
+  ) {
     buyScore += 8;
-    reasonsBuy.push("POSITIVE MOMENTUM");
+
+    reasonsBuy.push(
+      "POSITIVE MOMENTUM"
+    );
   }
 
-  if (momentum <= -0.7) {
+  if (
+    momentum <= -0.7
+  ) {
     sellScore += 8;
-    reasonsSell.push("NEGATIVE MOMENTUM");
+
+    reasonsSell.push(
+      "NEGATIVE MOMENTUM"
+    );
   }
 
   /* Candle pattern */
 
   if (
-    pattern === "BULLISH ENGULFING" ||
-    pattern === "HAMMER" ||
-    pattern === "STRONG BULLISH CANDLE"
+    pattern ===
+      "BULLISH ENGULFING" ||
+    pattern ===
+      "HAMMER" ||
+    pattern ===
+      "STRONG BULLISH CANDLE"
   ) {
     buyScore += 8;
-    reasonsBuy.push(pattern);
+
+    reasonsBuy.push(
+      pattern
+    );
   }
 
   if (
-    pattern === "BEARISH ENGULFING" ||
-    pattern === "SHOOTING STAR" ||
-    pattern === "STRONG BEARISH CANDLE"
+    pattern ===
+      "BEARISH ENGULFING" ||
+    pattern ===
+      "SHOOTING STAR" ||
+    pattern ===
+      "STRONG BEARISH CANDLE"
   ) {
     sellScore += 8;
-    reasonsSell.push(pattern);
+
+    reasonsSell.push(
+      pattern
+    );
   }
 
   /* =========================
@@ -709,12 +840,14 @@ function analyze(input) {
 
   const supportDistance =
     Math.abs(
-      last.close - support
+      last.close -
+      support
     );
 
   const resistanceDistance =
     Math.abs(
-      resistance - last.close
+      resistance -
+      last.close
     );
 
   const nearSupport =
@@ -725,14 +858,24 @@ function analyze(input) {
     resistanceDistance <=
     volatility * 0.45;
 
-  if (nearSupport) {
+  if (
+    nearSupport
+  ) {
     buyScore += 8;
-    reasonsBuy.push("NEAR SUPPORT");
+
+    reasonsBuy.push(
+      "NEAR SUPPORT"
+    );
   }
 
-  if (nearResistance) {
+  if (
+    nearResistance
+  ) {
     sellScore += 8;
-    reasonsSell.push("NEAR RESISTANCE");
+
+    reasonsSell.push(
+      "NEAR RESISTANCE"
+    );
   }
 
   /* =========================
@@ -740,7 +883,8 @@ function analyze(input) {
   ========================= */
 
   const range =
-    last.high - last.low;
+    last.high -
+    last.low;
 
   if (range > 0) {
 
@@ -748,7 +892,8 @@ function analyze(input) {
       Math.min(
         last.open,
         last.close
-      ) - last.low;
+      ) -
+      last.low;
 
     const upperWick =
       last.high -
@@ -759,18 +904,26 @@ function analyze(input) {
 
     if (
       nearSupport &&
-      lowerWick / range >= 0.45
+      lowerWick / range >=
+        0.45
     ) {
       buyScore += 6;
-      reasonsBuy.push("SUPPORT REJECTION");
+
+      reasonsBuy.push(
+        "SUPPORT REJECTION"
+      );
     }
 
     if (
       nearResistance &&
-      upperWick / range >= 0.45
+      upperWick / range >=
+        0.45
     ) {
       sellScore += 6;
-      reasonsSell.push("RESISTANCE REJECTION");
+
+      reasonsSell.push(
+        "RESISTANCE REJECTION"
+      );
     }
   }
 
@@ -782,14 +935,18 @@ function analyze(input) {
     Math.max(
       ...candles
         .slice(-21, -1)
-        .map(c => c.high)
+        .map(
+          c => c.high
+        )
     );
 
   const previousSupport =
     Math.min(
       ...candles
         .slice(-21, -1)
-        .map(c => c.low)
+        .map(
+          c => c.low
+        )
     );
 
   if (
@@ -799,7 +956,10 @@ function analyze(input) {
       last.open
   ) {
     buyScore += 10;
-    reasonsBuy.push("BREAKOUT UP");
+
+    reasonsBuy.push(
+      "BREAKOUT UP"
+    );
   }
 
   if (
@@ -809,7 +969,66 @@ function analyze(input) {
       last.open
   ) {
     sellScore += 10;
-    reasonsSell.push("BREAKOUT DOWN");
+
+    reasonsSell.push(
+      "BREAKOUT DOWN"
+    );
+  }
+
+  /* =========================
+     Previous candle direction
+  ========================= */
+
+  let previousCandleDirection =
+    "NEUTRAL";
+
+  if (
+    last.close >
+    last.open
+  ) {
+    previousCandleDirection =
+      "BUYER";
+  }
+
+  else if (
+    last.close <
+    last.open
+  ) {
+    previousCandleDirection =
+      "SELLER";
+  }
+
+  /* =========================
+     Candle body strength
+  ========================= */
+
+  let candleStrength =
+    "WEAK";
+
+  if (range > 0) {
+
+    const body =
+      Math.abs(
+        last.close -
+        last.open
+      );
+
+    const bodyRatio =
+      body / range;
+
+    if (
+      bodyRatio >= 0.65
+    ) {
+      candleStrength =
+        "STRONG";
+    }
+
+    else if (
+      bodyRatio >= 0.40
+    ) {
+      candleStrength =
+        "MEDIUM";
+    }
   }
 
   /* =========================
@@ -840,92 +1059,122 @@ function analyze(input) {
       sellScore
     );
 
-  let signal = "WAIT";
-  let strength = "LOW";
+  let signal =
+    "WAIT";
 
-  let directionScore =
+  let strength =
+    "LOW";
+
+  const directionScore =
     Math.max(
       buyScore,
       sellScore
     );
 
-  /*
-    Strong BUY
-    requires many confirmations.
-  */
+  /* =========================
+     STRONG BUY
+  ========================= */
 
   if (
     buyScore >= 78 &&
-    buyScore > sellScore + 15 &&
-    trend === "UPTREND" &&
+    buyScore >
+      sellScore + 15 &&
+    trend ===
+      "UPTREND" &&
     M.histogram > 0 &&
-    P.label !== "STRONG SELLER" &&
+    P.label !==
+      "STRONG SELLER" &&
     !extremeRsi
   ) {
-    signal = "STRONG BUY";
-    strength = "VERY HIGH";
+    signal =
+      "STRONG BUY";
+
+    strength =
+      "VERY HIGH";
   }
 
-  /*
-    Strong SELL
-  */
+  /* =========================
+     STRONG SELL
+  ========================= */
 
   else if (
     sellScore >= 78 &&
-    sellScore > buyScore + 15 &&
-    trend === "DOWNTREND" &&
+    sellScore >
+      buyScore + 15 &&
+    trend ===
+      "DOWNTREND" &&
     M.histogram < 0 &&
-    P.label !== "STRONG BUYER" &&
+    P.label !==
+      "STRONG BUYER" &&
     !extremeRsi
   ) {
-    signal = "STRONG SELL";
-    strength = "VERY HIGH";
+    signal =
+      "STRONG SELL";
+
+    strength =
+      "VERY HIGH";
   }
 
-  /*
-    Normal BUY
-  */
+  /* =========================
+     BUY
+  ========================= */
 
   else if (
     buyScore >= 68 &&
-    buyScore > sellScore + 12 &&
-    trend === "UPTREND" &&
+    buyScore >
+      sellScore + 12 &&
+    trend ===
+      "UPTREND" &&
     M.histogram > 0 &&
     !extremeRsi
   ) {
-    signal = "BUY";
-    strength = "HIGH";
+    signal =
+      "BUY";
+
+    strength =
+      "HIGH";
   }
 
-  /*
-    Normal SELL
-  */
+  /* =========================
+     SELL
+  ========================= */
 
   else if (
     sellScore >= 68 &&
-    sellScore > buyScore + 12 &&
-    trend === "DOWNTREND" &&
+    sellScore >
+      buyScore + 12 &&
+    trend ===
+      "DOWNTREND" &&
     M.histogram < 0 &&
     !extremeRsi
   ) {
-    signal = "SELL";
-    strength = "HIGH";
+    signal =
+      "SELL";
+
+    strength =
+      "HIGH";
   }
 
-  /*
-    Everything else = WAIT
-  */
+  /* =========================
+     WAIT
+  ========================= */
 
   else {
-    signal = "WAIT";
+
+    signal =
+      "WAIT";
 
     if (
       directionScore >= 60 &&
       difference >= 8
     ) {
-      strength = "MEDIUM";
-    } else {
-      strength = "LOW";
+      strength =
+        "MEDIUM";
+    }
+
+    else {
+      strength =
+        "LOW";
     }
   }
 
@@ -942,8 +1191,32 @@ function analyze(input) {
 
     sellScore,
 
+    /* Price of analyzed CLOSED candle */
+
     price:
-      rnd(last.close, 6),
+      rnd(
+        last.close,
+        6
+      ),
+
+    /* Direction of analyzed candle */
+
+    previousCandle:
+      previousCandleDirection,
+
+    previousCandleStrength:
+      candleStrength,
+
+    /* Candle timestamp */
+
+    analyzedCandleTime:
+      last.time,
+
+    analyzedCandle:
+      "PREVIOUS CLOSED CANDLE",
+
+    target:
+      "NEXT CANDLE",
 
     trend,
 
@@ -951,66 +1224,115 @@ function analyze(input) {
       P.label,
 
     pressureValue:
-      rnd(P.value, 3),
+      rnd(
+        P.value,
+        3
+      ),
 
     candlePattern:
       pattern,
 
     support:
-      rnd(support, 6),
+      rnd(
+        support,
+        6
+      ),
 
     resistance:
-      rnd(resistance, 6),
+      rnd(
+        resistance,
+        6
+      ),
 
     supportDistance:
-      rnd(supportDistance, 6),
+      rnd(
+        supportDistance,
+        6
+      ),
 
     resistanceDistance:
-      rnd(resistanceDistance, 6),
+      rnd(
+        resistanceDistance,
+        6
+      ),
 
     momentum:
-      rnd(momentum, 2),
+      rnd(
+        momentum,
+        2
+      ),
 
     confirmations: {
+
       buy:
-        reasonsBuy.slice(0, 8),
+        reasonsBuy.slice(
+          0,
+          8
+        ),
 
       sell:
-        reasonsSell.slice(0, 8)
+        reasonsSell.slice(
+          0,
+          8
+        )
     },
 
     indicators: {
 
       rsi:
-        rnd(R, 2),
+        rnd(
+          R,
+          2
+        ),
 
       ema9:
-        rnd(e9, 6),
+        rnd(
+          e9,
+          6
+        ),
 
       ema21:
-        rnd(e21, 6),
+        rnd(
+          e21,
+          6
+        ),
 
       ema50:
-        rnd(e50, 6),
+        rnd(
+          e50,
+          6
+        ),
 
       macd:
-        rnd(M.line, 8),
+        rnd(
+          M.line,
+          8
+        ),
 
       macdSignal:
-        rnd(M.signal, 8),
+        rnd(
+          M.signal,
+          8
+        ),
 
       macdHistogram:
-        rnd(M.histogram, 8),
+        rnd(
+          M.histogram,
+          8
+        ),
 
       atr:
-        rnd(A, 8)
+        rnd(
+          A,
+          8
+        )
     },
 
     validCandles:
       candles.length,
 
     warning:
-      "Indicator-based analysis only. Signal strength is not a guaranteed win probability or profit guarantee."
+      "Previous closed candle confirmation only. Signal strength is not a guaranteed win probability or profit guarantee."
   };
 }
 
@@ -1024,21 +1346,34 @@ function yahooSymbol(symbol) {
     String(symbol || "")
       .trim()
       .toUpperCase()
-      .replace(/\s+/g, "");
+      .replace(
+        /\s+/g,
+        ""
+      );
 
   if (
-    /^[A-Z]{3}\/[A-Z]{3}$/.test(s)
+    /^[A-Z]{3}\/[A-Z]{3}$/.test(
+      s
+    )
   ) {
     return (
-      s.replace("/", "") +
+      s.replace(
+        "/",
+        ""
+      ) +
       "=X"
     );
   }
 
   if (
-    /^[A-Z]{6}$/.test(s)
+    /^[A-Z]{6}$/.test(
+      s
+    )
   ) {
-    return s + "=X";
+    return (
+      s +
+      "=X"
+    );
   }
 
   return s;
@@ -1048,33 +1383,47 @@ function yahooSymbol(symbol) {
    Yahoo interval
 ========================= */
 
-function yahooInterval(interval) {
+function yahooInterval(
+  interval
+) {
 
   const map = {
 
-    "1min": "1m",
+    "1min":
+      "1m",
 
-    "5min": "5m",
+    "5min":
+      "5m",
 
-    "15min": "15m",
+    "15min":
+      "15m",
 
-    "30min": "30m",
+    "30min":
+      "30m",
 
-    "45min": "60m",
+    "45min":
+      "60m",
 
-    "1h": "60m",
+    "1h":
+      "60m",
 
-    "2h": "60m",
+    "2h":
+      "60m",
 
-    "4h": "1d",
+    "4h":
+      "1d",
 
-    "8h": "1d",
+    "8h":
+      "1d",
 
-    "1day": "1d",
+    "1day":
+      "1d",
 
-    "1week": "1wk",
+    "1week":
+      "1wk",
 
-    "1month": "1mo"
+    "1month":
+      "1mo"
   };
 
   return (
@@ -1087,33 +1436,44 @@ function yahooInterval(interval) {
    Yahoo range
 ========================= */
 
-function yahooRange(interval) {
+function yahooRange(
+  interval
+) {
 
   if (
-    interval === "1min"
+    interval ===
+    "1min"
   ) {
     return "1d";
   }
 
   if (
-    interval === "5min" ||
-    interval === "15min"
+    interval ===
+      "5min" ||
+    interval ===
+      "15min"
   ) {
     return "5d";
   }
 
   if (
-    interval === "30min" ||
-    interval === "45min" ||
-    interval === "1h" ||
-    interval === "2h"
+    interval ===
+      "30min" ||
+    interval ===
+      "45min" ||
+    interval ===
+      "1h" ||
+    interval ===
+      "2h"
   ) {
     return "1mo";
   }
 
   if (
-    interval === "4h" ||
-    interval === "8h"
+    interval ===
+      "4h" ||
+    interval ===
+      "8h"
   ) {
     return "3mo";
   }
@@ -1131,23 +1491,34 @@ async function yahooCandles(
 ) {
 
   const ys =
-    yahooSymbol(symbol);
+    yahooSymbol(
+      symbol
+    );
 
   const url =
     "https://query1.finance.yahoo.com/v8/finance/chart/" +
-    encodeURIComponent(ys) +
+    encodeURIComponent(
+      ys
+    ) +
     "?range=" +
-    yahooRange(interval) +
+    yahooRange(
+      interval
+    ) +
     "&interval=" +
-    yahooInterval(interval);
+    yahooInterval(
+      interval
+    );
 
   const response =
-    await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 MD-Shawon-Traders"
+    await fetch(
+      url,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 MD-Shawon-Traders"
+        }
       }
-    });
+    );
 
   const text =
     await response.text();
@@ -1162,7 +1533,9 @@ async function yahooCandles(
 
   try {
     data =
-      JSON.parse(text);
+      JSON.parse(
+        text
+      );
   } catch {
     throw new Error(
       "Yahoo returned invalid data"
@@ -1185,7 +1558,8 @@ async function yahooCandles(
     result?.indicators?.quote?.[0];
 
   const timestamps =
-    result?.timestamp || [];
+    result?.timestamp ||
+    [];
 
   if (!quote) {
     throw new Error(
@@ -1202,16 +1576,24 @@ async function yahooCandles(
   ) {
 
     const open =
-      num(quote.open?.[i]);
+      num(
+        quote.open?.[i]
+      );
 
     const high =
-      num(quote.high?.[i]);
+      num(
+        quote.high?.[i]
+      );
 
     const low =
-      num(quote.low?.[i]);
+      num(
+        quote.low?.[i]
+      );
 
     const close =
-      num(quote.close?.[i]);
+      num(
+        quote.close?.[i]
+      );
 
     if (
       open !== null &&
@@ -1234,7 +1616,9 @@ async function yahooCandles(
       candles.push({
 
         time:
-          Number(timestamps[i]),
+          Number(
+            timestamps[i]
+          ),
 
         open,
 
@@ -1266,10 +1650,13 @@ export default {
     env
   ) {
 
+    /* OPTIONS */
+
     if (
       request.method ===
       "OPTIONS"
     ) {
+
       return new Response(
         null,
         {
@@ -1280,11 +1667,15 @@ export default {
     }
 
     const url =
-      new URL(request.url);
+      new URL(
+        request.url
+      );
 
     try {
 
-      /* HOME */
+      /* =========================
+         HOME
+      ========================= */
 
       if (
         url.pathname === "/" &&
@@ -1295,22 +1686,33 @@ export default {
 
           ok: true,
 
-          app: APP,
+          app:
+            APP,
 
-          version: VERSION,
+          version:
+            VERSION,
 
           provider:
             "Yahoo Finance chart",
+
+          analysisMode:
+            "PREVIOUS CLOSED CANDLE",
+
+          target:
+            "NEXT CANDLE",
 
           note:
             "Real-market indicator analysis. OTC is never faked."
         });
       }
 
-      /* DEBUG */
+      /* =========================
+         DEBUG
+      ========================= */
 
       if (
-        url.pathname === "/debug" &&
+        url.pathname ===
+          "/debug" &&
         request.method === "GET"
       ) {
 
@@ -1318,9 +1720,11 @@ export default {
 
           ok: true,
 
-          app: APP,
+          app:
+            APP,
 
-          version: VERSION,
+          version:
+            VERSION,
 
           provider:
             "Yahoo Finance chart",
@@ -1332,10 +1736,13 @@ export default {
         });
       }
 
-      /* MARKET */
+      /* =========================
+         MARKET
+      ========================= */
 
       if (
-        url.pathname === "/market" &&
+        url.pathname ===
+          "/market" &&
         request.method === "POST"
       ) {
 
@@ -1360,7 +1767,9 @@ export default {
             "REAL"
           ).toUpperCase();
 
-        /* Never fake OTC */
+        /* =========================
+           NEVER FAKE OTC
+        ========================= */
 
         if (
           mode === "OTC"
@@ -1371,9 +1780,11 @@ export default {
 
               ok: false,
 
-              signal: "WAIT",
+              signal:
+                "WAIT",
 
-              strength: "LOW",
+              strength:
+                "LOW",
 
               error:
                 "OTC data is not available from this provider. No fake OTC signal will be generated."
@@ -1382,22 +1793,80 @@ export default {
           );
         }
 
-        const candles =
+        /* =========================
+           GET MARKET DATA
+        ========================= */
+
+        const allCandles =
           await yahooCandles(
             symbol,
             interval
           );
 
+        if (
+          allCandles.length <
+          61
+        ) {
+          throw new Error(
+            `Not enough market candles (${allCandles.length}); need at least 61 so one latest candle can be excluded.`
+          );
+        }
+
+        /*
+          IMPORTANT:
+
+          Yahoo-এর সর্বশেষ candle
+          current / possibly still-forming
+          candle হিসেবে বাদ দেওয়া হচ্ছে।
+
+          তার আগের candle-ই
+          analysis candle।
+        */
+
+        const liveCandle =
+          allCandles.at(-1);
+
+        const closedCandles =
+          allCandles.slice(
+            0,
+            -1
+          );
+
+        if (
+          closedCandles.length <
+          60
+        ) {
+          throw new Error(
+            `Not enough closed candles (${closedCandles.length}); need at least 60.`
+          );
+        }
+
+        /* =========================
+           ANALYZE PREVIOUS CLOSED
+        ========================= */
+
         const analysis =
-          analyze(candles);
+          analyze(
+            closedCandles
+          );
+
+        /* =========================
+           LIVE CURRENT CANDLE INFO
+        ========================= */
+
+        const livePrice =
+          liveCandle?.close ??
+          null;
 
         return json({
 
           ok: true,
 
-          app: APP,
+          app:
+            APP,
 
-          version: VERSION,
+          version:
+            VERSION,
 
           provider:
             "Yahoo Finance chart",
@@ -1409,17 +1878,62 @@ export default {
           mode,
 
           candleCount:
-            candles.length,
+            allCandles.length,
+
+          closedCandleCount:
+            closedCandles.length,
+
+          liveCandle: {
+
+            time:
+              liveCandle?.time ??
+              null,
+
+            open:
+              rnd(
+                liveCandle?.open,
+                6
+              ),
+
+            high:
+              rnd(
+                liveCandle?.high,
+                6
+              ),
+
+            low:
+              rnd(
+                liveCandle?.low,
+                6
+              ),
+
+            close:
+              rnd(
+                liveCandle?.close,
+                6
+              )
+          },
+
+          livePrice:
+            rnd(
+              livePrice,
+              6
+            ),
 
           analysis
 
         });
       }
 
+      /* =========================
+         NOT FOUND
+      ========================= */
+
       return json(
         {
           ok: false,
-          error: "Not found"
+          error:
+            "Not found"
         },
         404
       );
@@ -1431,9 +1945,11 @@ export default {
 
           ok: false,
 
-          signal: "WAIT",
+          signal:
+            "WAIT",
 
-          strength: "LOW",
+          strength:
+            "LOW",
 
           error:
             error?.message ||
