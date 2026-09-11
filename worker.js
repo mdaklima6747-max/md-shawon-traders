@@ -1,5 +1,5 @@
 const APP = "MD Shawon Traders";
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -18,267 +18,599 @@ function json(data, status = 200) {
 }
 
 function num(x) {
-  const v = Number(x);
-  return Number.isFinite(v) ? v : null;
+  const n = Number(x);
+  return Number.isFinite(n) ? n : null;
 }
 
-function clamp(x, a, b) {
-  return Math.max(a, Math.min(b, x));
+function clamp(x, min, max) {
+  return Math.max(min, Math.min(max, x));
 }
 
-function rnd(x, d = 6) {
-  const p = 10 ** d;
+function rnd(x, digits = 6) {
+  if (!Number.isFinite(x)) return null;
+  const p = 10 ** digits;
   return Math.round(x * p) / p;
 }
 
-function ema(v, p) {
-  if (!v.length) return [];
+/* =========================
+   INDICATORS
+========================= */
 
-  const k = 2 / (p + 1);
-  const out = [v[0]];
+function ema(values, period) {
+  if (values.length === 0) return [];
 
-  for (let i = 1; i < v.length; i++) {
-    out.push(v[i] * k + out[i - 1] * (1 - k));
+  const result = [];
+  const k = 2 / (period + 1);
+
+  result.push(values[0]);
+
+  for (let i = 1; i < values.length; i++) {
+    result.push(
+      values[i] * k +
+      result[i - 1] * (1 - k)
+    );
   }
 
-  return out;
+  return result;
 }
 
-function rsi(v, p = 14) {
-  if (v.length <= p) return null;
+function rsi(values, period = 14) {
+  if (values.length <= period) return null;
 
-  let gain = 0;
-  let loss = 0;
+  let gains = 0;
+  let losses = 0;
 
-  for (let i = 1; i <= p; i++) {
-    const d = v[i] - v[i - 1];
+  for (let i = 1; i <= period; i++) {
+    const change = values[i] - values[i - 1];
 
-    if (d > 0) gain += d;
-    else loss -= d;
+    if (change > 0) gains += change;
+    else losses -= change;
   }
 
-  let avgGain = gain / p;
-  let avgLoss = loss / p;
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
 
-  for (let i = p + 1; i < v.length; i++) {
-    const d = v[i] - v[i - 1];
-    const g = Math.max(d, 0);
-    const l = Math.max(-d, 0);
+  for (let i = period + 1; i < values.length; i++) {
+    const change = values[i] - values[i - 1];
 
-    avgGain = (avgGain * (p - 1) + g) / p;
-    avgLoss = (avgLoss * (p - 1) + l) / p;
+    const gain = Math.max(change, 0);
+    const loss = Math.max(-change, 0);
+
+    avgGain =
+      (avgGain * (period - 1) + gain) /
+      period;
+
+    avgLoss =
+      (avgLoss * (period - 1) + loss) /
+      period;
   }
 
   if (avgLoss === 0) return 100;
 
-  return 100 - 100 / (1 + avgGain / avgLoss);
+  const rs = avgGain / avgLoss;
+
+  return 100 - 100 / (1 + rs);
 }
 
-function atr(c, p = 14) {
-  if (c.length < p + 1) return null;
+function atr(candles, period = 14) {
+  if (candles.length <= period) return null;
 
-  const tr = [];
+  const trueRanges = [];
 
-  for (let i = 1; i < c.length; i++) {
-    tr.push(
-      Math.max(
-        c[i].high - c[i].low,
-        Math.abs(c[i].high - c[i - 1].close),
-        Math.abs(c[i].low - c[i - 1].close)
+  for (let i = 1; i < candles.length; i++) {
+    const current = candles[i];
+    const previous = candles[i - 1];
+
+    const tr = Math.max(
+      current.high - current.low,
+      Math.abs(
+        current.high - previous.close
+      ),
+      Math.abs(
+        current.low - previous.close
       )
     );
+
+    if (Number.isFinite(tr)) {
+      trueRanges.push(tr);
+    }
   }
 
-  return tr.slice(-p).reduce((a, b) => a + b, 0) / p;
+  if (trueRanges.length < period) return null;
+
+  return (
+    trueRanges
+      .slice(-period)
+      .reduce((a, b) => a + b, 0) /
+    period
+  );
 }
 
-function macd(v) {
-  const e12 = ema(v, 12);
-  const e26 = ema(v, 26);
+function macd(values) {
+  const ema12 = ema(values, 12);
+  const ema26 = ema(values, 26);
 
-  const line = v.map((_, i) => e12[i] - e26[i]);
-  const signal = ema(line, 9);
+  const line = values.map(
+    (_, i) => ema12[i] - ema26[i]
+  );
 
-  const m = line[line.length - 1];
-  const s = signal[signal.length - 1];
+  const signalValues = ema(line, 9);
+
+  const last = line.length - 1;
+
+  const macdLine = line[last];
+  const signalLine = signalValues[last];
 
   return {
-    line: m,
-    signal: s,
-    hist: m - s
+    line: macdLine,
+    signal: signalLine,
+    histogram: macdLine - signalLine
   };
 }
 
-function pressure(c) {
-  let total = 0;
+/* =========================
+   CANDLE PRESSURE
+========================= */
 
-  for (const x of c.slice(-5)) {
-    total += (x.close - x.open) / (x.high - x.low || 1);
+function candlePressure(candles) {
+  const recent = candles.slice(-5);
+
+  if (!recent.length) {
+    return "NEUTRAL";
   }
 
-  const value = total / Math.min(5, c.length);
+  let total = 0;
 
-  if (value > 0.45) return "STRONG BUYER";
-  if (value < -0.45) return "STRONG SELLER";
-  if (value > 0.12) return "BUYER";
-  if (value < -0.12) return "SELLER";
+  for (const candle of recent) {
+    const range =
+      candle.high - candle.low;
+
+    if (range <= 0) continue;
+
+    total +=
+      (candle.close - candle.open) /
+      range;
+  }
+
+  const value =
+    total / recent.length;
+
+  if (value >= 0.45) {
+    return "STRONG BUYER";
+  }
+
+  if (value <= -0.45) {
+    return "STRONG SELLER";
+  }
+
+  if (value >= 0.12) {
+    return "BUYER";
+  }
+
+  if (value <= -0.12) {
+    return "SELLER";
+  }
 
   return "NEUTRAL";
 }
 
-function analyze(c) {
-  c.sort((a, b) => a.time - b.time);
+/* =========================
+   CANDLE FILTER
+========================= */
 
-  if (c.length < 60) {
+function cleanCandles(candles) {
+  const valid = [];
+
+  for (const c of candles) {
+    if (
+      !Number.isFinite(c.time) ||
+      !Number.isFinite(c.open) ||
+      !Number.isFinite(c.high) ||
+      !Number.isFinite(c.low) ||
+      !Number.isFinite(c.close)
+    ) {
+      continue;
+    }
+
+    if (
+      c.open <= 0 ||
+      c.high <= 0 ||
+      c.low <= 0 ||
+      c.close <= 0
+    ) {
+      continue;
+    }
+
+    if (c.high < c.low) {
+      continue;
+    }
+
+    if (c.high < c.open) {
+      continue;
+    }
+
+    if (c.high < c.close) {
+      continue;
+    }
+
+    if (c.low > c.open) {
+      continue;
+    }
+
+    if (c.low > c.close) {
+      continue;
+    }
+
+    valid.push(c);
+  }
+
+  valid.sort(
+    (a, b) => a.time - b.time
+  );
+
+  return valid;
+}
+
+/* =========================
+   ANALYSIS
+========================= */
+
+function analyze(inputCandles) {
+  const candles =
+    cleanCandles(inputCandles);
+
+  if (candles.length < 60) {
     throw new Error(
-      `Not enough candle data (${c.length}); need at least 60.`
+      `Not enough valid candles (${candles.length}). Need at least 60.`
     );
   }
 
-  const close = c.map(x => x.close);
-  const last = c[c.length - 1];
+  const close = candles.map(
+    c => c.close
+  );
 
-  const e9 = ema(close, 9).at(-1);
-  const e21 = ema(close, 21).at(-1);
-  const e50 = ema(close, 50).at(-1);
+  const last =
+    candles[candles.length - 1];
 
-  const R = rsi(close);
-  const A = atr(c);
-  const M = macd(close);
-  const P = pressure(c);
+  const price = last.close;
 
-  const highs = c.slice(-30).map(x => x.high);
-  const lows = c.slice(-30).map(x => x.low);
+  const ema9Values = ema(close, 9);
+  const ema21Values = ema(close, 21);
+  const ema50Values = ema(close, 50);
 
-  const support = Math.min(...lows);
-  const resistance = Math.max(...highs);
+  const e9 =
+    ema9Values[ema9Values.length - 1];
 
-  const up = e9 > e21 && e21 > e50;
-  const down = e9 < e21 && e21 < e50;
+  const e21 =
+    ema21Values[ema21Values.length - 1];
 
-  const momentum =
-    (last.close - close[Math.max(0, close.length - 6)]) /
-    (A || last.close * 0.0001);
+  const e50 =
+    ema50Values[ema50Values.length - 1];
+
+  const RSI = rsi(close, 14);
+  const ATR = atr(candles, 14);
+  const MACD = macd(close);
+  const PRESSURE =
+    candlePressure(candles);
+
+  /* Support / Resistance */
+
+  const recent =
+    candles.slice(-30);
+
+  const support = Math.min(
+    ...recent.map(c => c.low)
+  );
+
+  const resistance = Math.max(
+    ...recent.map(c => c.high)
+  );
+
+  /* Trend */
+
+  const uptrend =
+    e9 > e21 &&
+    e21 > e50 &&
+    price > e21;
+
+  const downtrend =
+    e9 < e21 &&
+    e21 < e50 &&
+    price < e21;
+
+  let trend = "SIDEWAYS";
+
+  if (uptrend) {
+    trend = "UPTREND";
+  } else if (downtrend) {
+    trend = "DOWNTREND";
+  }
+
+  /* Momentum */
+
+  const previousIndex =
+    Math.max(0, close.length - 6);
+
+  const previousPrice =
+    close[previousIndex];
+
+  let momentum = 0;
+
+  if (ATR && ATR > 0) {
+    momentum =
+      (price - previousPrice) / ATR;
+  }
+
+  /* =========================
+     SCORE
+  ========================= */
 
   let score = 50;
 
-  if (up) score += 12;
-  else if (down) score -= 12;
+  if (uptrend) {
+    score += 15;
+  } else if (downtrend) {
+    score -= 15;
+  }
 
-  if (last.close > e21) score += 8;
-  else score -= 8;
+  if (price > e21) {
+    score += 8;
+  } else if (price < e21) {
+    score -= 8;
+  }
 
-  if (R >= 50 && R < 70) score += 7;
-  else if (R <= 50 && R > 30) score -= 7;
+  if (RSI !== null) {
+    if (RSI >= 52 && RSI < 70) {
+      score += 7;
+    } else if (
+      RSI <= 48 &&
+      RSI > 30
+    ) {
+      score -= 7;
+    }
+  }
 
-  if (M.hist > 0) score += 10;
-  else score -= 10;
+  if (MACD.histogram > 0) {
+    score += 10;
+  } else if (MACD.histogram < 0) {
+    score -= 10;
+  }
 
-  if (P === "STRONG BUYER") score += 8;
-  else if (P === "STRONG SELLER") score -= 8;
-  else if (P === "BUYER") score += 4;
-  else if (P === "SELLER") score -= 4;
+  if (
+    PRESSURE === "STRONG BUYER"
+  ) {
+    score += 10;
+  } else if (
+    PRESSURE === "STRONG SELLER"
+  ) {
+    score -= 10;
+  } else if (
+    PRESSURE === "BUYER"
+  ) {
+    score += 4;
+  } else if (
+    PRESSURE === "SELLER"
+  ) {
+    score -= 4;
+  }
 
-  if (momentum > 0.5) score += 5;
-  else if (momentum < -0.5) score -= 5;
+  if (momentum > 0.5) {
+    score += 5;
+  } else if (momentum < -0.5) {
+    score -= 5;
+  }
 
-  if (last.close <= support + A * 0.15) score += 6;
+  /* Support / Resistance proximity */
 
-  if (last.close >= resistance - A * 0.15) score -= 6;
+  if (ATR && ATR > 0) {
+    if (
+      price <=
+      support + ATR * 0.20
+    ) {
+      score += 5;
+    }
 
-  score = Math.round(clamp(score, 0, 100));
+    if (
+      price >=
+      resistance - ATR * 0.20
+    ) {
+      score -= 5;
+    }
+  }
+
+  score =
+    Math.round(
+      clamp(score, 0, 100)
+    );
+
+  /* =========================
+     SIGNAL ENGINE
+  ========================= */
 
   let signal = "WAIT";
   let strength = "LOW";
 
-  if (R > 75 || R < 25) {
+  /*
+     Extreme RSI = WAIT
+  */
+
+  if (
+    RSI !== null &&
+    (RSI >= 75 || RSI <= 25)
+  ) {
     signal = "WAIT";
-  } else if (
+    strength = "LOW";
+  }
+
+  /*
+     STRONG BUY
+  */
+
+  else if (
     score >= 82 &&
-    up &&
-    P === "STRONG BUYER" &&
-    M.hist > 0
+    uptrend &&
+    PRESSURE === "STRONG BUYER" &&
+    MACD.histogram > 0 &&
+    RSI >= 50 &&
+    RSI < 72
   ) {
     signal = "STRONG BUY";
     strength = "VERY HIGH";
-  } else if (
-    score >= 70 &&
-    up &&
-    P !== "STRONG SELLER"
+  }
+
+  /*
+     BUY
+  */
+
+  else if (
+    score >= 72 &&
+    uptrend &&
+    PRESSURE !== "STRONG SELLER" &&
+    MACD.histogram > 0 &&
+    RSI >= 45 &&
+    RSI < 70
   ) {
     signal = "BUY";
     strength = "HIGH";
-  } else if (
+  }
+
+  /*
+     STRONG SELL
+  */
+
+  else if (
     score <= 18 &&
-    down &&
-    P === "STRONG SELLER" &&
-    M.hist < 0
+    downtrend &&
+    PRESSURE === "STRONG SELLER" &&
+    MACD.histogram < 0 &&
+    RSI <= 50 &&
+    RSI > 28
   ) {
     signal = "STRONG SELL";
     strength = "VERY HIGH";
-  } else if (
-    score <= 30 &&
-    down &&
-    P !== "STRONG BUYER"
+  }
+
+  /*
+     SELL
+  */
+
+  else if (
+    score <= 28 &&
+    downtrend &&
+    PRESSURE !== "STRONG BUYER" &&
+    MACD.histogram < 0 &&
+    RSI <= 55 &&
+    RSI > 30
   ) {
     signal = "SELL";
     strength = "HIGH";
-  } else if (score >= 60 || score <= 40) {
-    strength = "MEDIUM";
+  }
+
+  /*
+     Otherwise WAIT
+  */
+
+  else {
+    signal = "WAIT";
+
+    if (
+      score >= 60 ||
+      score <= 40
+    ) {
+      strength = "MEDIUM";
+    } else {
+      strength = "LOW";
+    }
   }
 
   return {
     signal,
     strength,
     score,
-    price: rnd(last.close),
 
-    trend: up
-      ? "UPTREND"
-      : down
-      ? "DOWNTREND"
-      : "SIDEWAYS",
+    price: rnd(price, 6),
 
-    pressure: P,
+    trend,
 
-    support: rnd(support),
-    resistance: rnd(resistance),
+    pressure: PRESSURE,
+
+    support: rnd(support, 6),
+
+    resistance: rnd(
+      resistance,
+      6
+    ),
 
     indicators: {
-      rsi: rnd(R, 2),
-      ema9: rnd(e9),
-      ema21: rnd(e21),
-      ema50: rnd(e50),
+      rsi: rnd(RSI, 2),
 
-      macd: rnd(M.line, 8),
-      macdSignal: rnd(M.signal, 8),
-      macdHistogram: rnd(M.hist, 8),
+      ema9: rnd(e9, 6),
+      ema21: rnd(e21, 6),
+      ema50: rnd(e50, 6),
 
-      atr: rnd(A, 8),
-      momentum: rnd(momentum, 2)
+      macd: rnd(
+        MACD.line,
+        8
+      ),
+
+      macdSignal: rnd(
+        MACD.signal,
+        8
+      ),
+
+      macdHistogram: rnd(
+        MACD.histogram,
+        8
+      ),
+
+      atr: rnd(ATR, 8),
+
+      momentum: rnd(
+        momentum,
+        2
+      )
     },
+
+    candleCount:
+      candles.length,
 
     warning:
       "Indicator-based analysis only. No signal guarantees profit or win rate."
   };
 }
 
-function yahooSymbol(symbol) {
-  let s = String(symbol || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "");
+/* =========================
+   YAHOO SYMBOL
+========================= */
 
-  if (/^[A-Z]{3}\/[A-Z]{3}$/.test(s)) {
-    return s.replace("/", "") + "=X";
+function yahooSymbol(symbol) {
+  let s =
+    String(symbol || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "");
+
+  if (
+    /^[A-Z]{3}\/[A-Z]{3}$/.test(s)
+  ) {
+    return (
+      s.replace("/", "") +
+      "=X"
+    );
   }
 
-  if (/^[A-Z]{6}$/.test(s)) {
+  if (
+    /^[A-Z]{6}$/.test(s)
+  ) {
     return s + "=X";
   }
 
   return s;
 }
+
+/* =========================
+   YAHOO INTERVAL
+========================= */
 
 function yahooInterval(interval) {
   const map = {
@@ -296,11 +628,20 @@ function yahooInterval(interval) {
     "1month": "1mo"
   };
 
-  return map[interval] || "1m";
+  return (
+    map[interval] ||
+    "1m"
+  );
 }
 
+/* =========================
+   YAHOO RANGE
+========================= */
+
 function yahooRange(interval) {
-  if (interval === "1min") return "1d";
+  if (interval === "1min") {
+    return "1d";
+  }
 
   if (
     interval === "5min" ||
@@ -328,22 +669,35 @@ function yahooRange(interval) {
   return "1y";
 }
 
-async function yahooCandles(symbol, interval) {
-  const ys = yahooSymbol(symbol);
+/* =========================
+   YAHOO CANDLES
+========================= */
+
+async function yahooCandles(
+  symbol,
+  interval
+) {
+  const yahoo =
+    yahooSymbol(symbol);
 
   const url =
-    `https://query1.finance.yahoo.com/v8/finance/chart/` +
-    `${encodeURIComponent(ys)}` +
-    `?range=${yahooRange(interval)}` +
-    `&interval=${yahooInterval(interval)}`;
+    "https://query1.finance.yahoo.com/v8/finance/chart/" +
+    encodeURIComponent(yahoo) +
+    "?range=" +
+    yahooRange(interval) +
+    "&interval=" +
+    yahooInterval(interval);
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 MD-Shawon-Traders"
-    }
-  });
+  const response =
+    await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 MD-Shawon-Traders"
+      }
+    });
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   if (!response.ok) {
     throw new Error(
@@ -356,19 +710,28 @@ async function yahooCandles(symbol, interval) {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error("Yahoo returned invalid data");
+    throw new Error(
+      "Yahoo returned invalid data"
+    );
   }
 
-  if (data?.chart?.error) {
+  if (
+    data?.chart?.error
+  ) {
     throw new Error(
       data.chart.error.description ||
       "Yahoo market-data error"
     );
   }
 
-  const result = data?.chart?.result?.[0];
-  const quote = result?.indicators?.quote?.[0];
-  const timestamps = result?.timestamp || [];
+  const result =
+    data?.chart?.result?.[0];
+
+  const quote =
+    result?.indicators?.quote?.[0];
+
+  const timestamps =
+    result?.timestamp || [];
 
   if (!quote) {
     throw new Error(
@@ -378,11 +741,25 @@ async function yahooCandles(symbol, interval) {
 
   const candles = [];
 
-  for (let i = 0; i < timestamps.length; i++) {
-    const open = num(quote.open?.[i]);
-    const high = num(quote.high?.[i]);
-    const low = num(quote.low?.[i]);
-    const close = num(quote.close?.[i]);
+  for (
+    let i = 0;
+    i < timestamps.length;
+    i++
+  ) {
+    const open =
+      num(quote.open?.[i]);
+
+    const high =
+      num(quote.high?.[i]);
+
+    const low =
+      num(quote.low?.[i]);
+
+    const close =
+      num(quote.close?.[i]);
+
+    const volume =
+      num(quote.volume?.[i]) || 0;
 
     if (
       open !== null &&
@@ -396,7 +773,7 @@ async function yahooCandles(symbol, interval) {
         high,
         low,
         close,
-        volume: num(quote.volume?.[i]) || 0
+        volume
       });
     }
   }
@@ -404,18 +781,34 @@ async function yahooCandles(symbol, interval) {
   return candles;
 }
 
+/* =========================
+   WORKER
+========================= */
+
 export default {
-  async fetch(request, env) {
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: CORS
-      });
+  async fetch(
+    request,
+    env
+  ) {
+    if (
+      request.method ===
+      "OPTIONS"
+    ) {
+      return new Response(
+        null,
+        {
+          status: 204,
+          headers: CORS
+        }
+      );
     }
 
-    const url = new URL(request.url);
+    const url =
+      new URL(request.url);
 
     try {
+      /* HOME */
+
       if (
         url.pathname === "/" &&
         request.method === "GET"
@@ -424,10 +817,14 @@ export default {
           ok: true,
           app: APP,
           version: VERSION,
-          dataProvider: "Yahoo Finance chart",
-          note: "Real-market data only. OTC is not faked."
+          provider:
+            "Yahoo Finance chart",
+          note:
+            "Real-market analysis only. OTC is never faked."
         });
       }
+
+      /* DEBUG */
 
       if (
         url.pathname === "/debug" &&
@@ -437,23 +834,41 @@ export default {
           ok: true,
           app: APP,
           version: VERSION,
-          dataProvider: "Yahoo Finance chart",
+          provider:
+            "Yahoo Finance chart",
           twelveDataApiKeyConfigured:
-            Boolean(env.TWELVE_DATA_API_KEY)
+            Boolean(
+              env.TWELVE_DATA_API_KEY
+            )
         });
       }
+
+      /* MARKET */
 
       if (
         url.pathname === "/market" &&
         request.method === "POST"
       ) {
-        const body = await request.json().catch(() => ({}));
+        const body =
+          await request
+            .json()
+            .catch(() => ({}));
 
-        const symbol = body.symbol || "EUR/USD";
-        const interval = body.interval || "1min";
-        const mode = String(
-          body.mode || "REAL"
-        ).toUpperCase();
+        const symbol =
+          body.symbol ||
+          "EUR/USD";
+
+        const interval =
+          body.interval ||
+          "1min";
+
+        const mode =
+          String(
+            body.mode ||
+            "REAL"
+          ).toUpperCase();
+
+        /* OTC */
 
         if (mode === "OTC") {
           return json(
@@ -461,28 +876,34 @@ export default {
               ok: false,
               signal: "WAIT",
               error:
-                "OTC data unavailable from this provider. No fake OTC signal will be generated."
+                "OTC data is not available from this provider. No fake OTC signal will be generated."
             },
             503
           );
         }
 
-        const candles = await yahooCandles(
-          symbol,
-          interval
-        );
+        /* REAL MARKET */
 
-        const analysis = analyze(candles);
+        const candles =
+          await yahooCandles(
+            symbol,
+            interval
+          );
+
+        const analysis =
+          analyze(candles);
 
         return json({
           ok: true,
           app: APP,
           version: VERSION,
-          provider: "Yahoo Finance chart",
+          provider:
+            "Yahoo Finance chart",
           symbol,
           interval,
           mode,
-          candleCount: candles.length,
+          candleCount:
+            candles.length,
           analysis
         });
       }
