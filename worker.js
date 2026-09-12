@@ -1,1963 +1,1124 @@
-const APP = "MD Shawon Traders";
-const VERSION = "2.5.0";
+// MD Shawon Traders — Worker 4.0.0
+// 1-minute-first real-market signal engine.
+// No fake Quotex OTC data. No AI API required.
+// IMPORTANT: This is an indicator engine, not a profit/win-rate guarantee.
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+const APP = "MD Shawon Traders";
+const VERSION = "4.0.0";
+const DEFAULT_SYMBOL = "EUR/USD";
+const DEFAULT_INTERVAL = "1min";
+
+const ALLOWED = new Set([
+  "1min","5min","15min","30min","45min",
+  "1h","2h","4h","8h","1day","1week","1month"
+]);
+
+const MTF = {
+  "1min":["5min","15min"],
+  "5min":["15min","1h"],
+  "15min":["1h","4h"]
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      ...CORS
-    }
-  });
-}
+const CORS = {
+  "Access-Control-Allow-Origin":"*",
+  "Access-Control-Allow-Methods":"GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers":"Content-Type, Authorization",
+  "Content-Type":"application/json; charset=utf-8"
+};
 
-function num(x) {
+const json = (x,s=200) =>
+  new Response(JSON.stringify(x),{status:s,headers:CORS});
+
+const n = x => {
   const v = Number(x);
   return Number.isFinite(v) ? v : null;
+};
+
+const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
+
+const rnd = (x,d=6) =>
+  x==null ? null : Math.round(x*10**d)/10**d;
+
+function normalizeSymbol(s){
+  return String(s||DEFAULT_SYMBOL)
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g,"");
 }
 
-function rnd(x, d = 6) {
-  if (!Number.isFinite(x)) return null;
-  const p = 10 ** d;
-  return Math.round(x * p) / p;
-}
+function emaSeries(v,p){
+  if(!Array.isArray(v)||v.length<p)return [];
 
-function clamp(x, min, max) {
-  return Math.max(min, Math.min(max, x));
-}
+  const out=Array(v.length).fill(null);
 
-/* =========================
-   EMA
-========================= */
+  let e=0;
+  for(let i=0;i<p;i++) e+=v[i];
 
-function ema(values, period) {
-  if (!values.length) return [];
+  e/=p;
+  out[p-1]=e;
 
-  const k = 2 / (period + 1);
-  const result = [values[0]];
+  const k=2/(p+1);
 
-  for (let i = 1; i < values.length; i++) {
-    result.push(
-      values[i] * k +
-      result[i - 1] * (1 - k)
-    );
+  for(let i=p;i<v.length;i++){
+    e=v[i]*k+e*(1-k);
+    out[i]=e;
   }
 
-  return result;
+  return out;
 }
 
-/* =========================
-   RSI
-========================= */
+const last = a => a?.length ? a[a.length-1] : null;
 
-function rsi(values, period = 14) {
-  if (values.length <= period) return null;
+const ema = (v,p) => last(emaSeries(v,p));
 
-  let gain = 0;
-  let loss = 0;
+function rsi(v,p=14){
+  if(!v||v.length<=p)return null;
 
-  for (let i = 1; i <= period; i++) {
-    const diff = values[i] - values[i - 1];
+  let g=0,l=0;
 
-    if (diff > 0) {
-      gain += diff;
-    } else {
-      loss -= diff;
-    }
+  for(let i=1;i<=p;i++){
+    const d=v[i]-v[i-1];
+
+    if(d>0) g+=d;
+    else l-=d;
   }
 
-  let avgGain = gain / period;
-  let avgLoss = loss / period;
+  let ag=g/p;
+  let al=l/p;
 
-  for (let i = period + 1; i < values.length; i++) {
-    const diff = values[i] - values[i - 1];
+  for(let i=p+1;i<v.length;i++){
+    const d=v[i]-v[i-1];
+    const gg=Math.max(d,0);
+    const ll=Math.max(-d,0);
 
-    const currentGain = Math.max(diff, 0);
-    const currentLoss = Math.max(-diff, 0);
-
-    avgGain =
-      ((avgGain * (period - 1)) + currentGain) /
-      period;
-
-    avgLoss =
-      ((avgLoss * (period - 1)) + currentLoss) /
-      period;
+    ag=(ag*(p-1)+gg)/p;
+    al=(al*(p-1)+ll)/p;
   }
 
-  if (avgLoss === 0) return 100;
-
-  return 100 -
-    100 / (1 + avgGain / avgLoss);
+  return al===0 ? 100 : 100-100/(1+ag/al);
 }
 
-/* =========================
-   ATR
-========================= */
+function atr(c,p=14){
+  if(!c||c.length<=p)return null;
 
-function atr(candles, period = 14) {
-  if (candles.length <= period) return null;
+  const tr=[];
 
-  const tr = [];
-
-  for (let i = 1; i < candles.length; i++) {
-    const c = candles[i];
-    const p = candles[i - 1];
+  for(let i=1;i<c.length;i++){
+    const x=c[i];
+    const q=c[i-1];
 
     tr.push(
       Math.max(
-        c.high - c.low,
-        Math.abs(c.high - p.close),
-        Math.abs(c.low - p.close)
+        x.high-x.low,
+        Math.abs(x.high-q.close),
+        Math.abs(x.low-q.close)
       )
     );
   }
 
-  const recent = tr.slice(-period);
+  let a=tr.slice(0,p)
+    .reduce((x,y)=>x+y,0)/p;
 
-  if (!recent.length) return null;
+  for(let i=p;i<tr.length;i++){
+    a=(a*(p-1)+tr[i])/p;
+  }
 
-  return (
-    recent.reduce(
-      (sum, value) => sum + value,
-      0
-    ) / recent.length
-  );
+  return a;
 }
 
-/* =========================
-   MACD
-========================= */
+function macd(v){
+  const e12=emaSeries(v,12);
+  const e26=emaSeries(v,26);
+  const line=[];
 
-function macd(values) {
-  const e12 = ema(values, 12);
-  const e26 = ema(values, 26);
+  for(let i=0;i<v.length;i++){
+    if(e12[i]!=null&&e26[i]!=null){
+      line.push(e12[i]-e26[i]);
+    }
+  }
 
-  const line = values.map(
-    (_, i) => e12[i] - e26[i]
-  );
-
-  const signalSeries = ema(line, 9);
-
-  const lineLast = line.at(-1);
-  const signalLast = signalSeries.at(-1);
+  const sig=ema(line,9);
+  const ln=last(line);
 
   return {
-    line: lineLast,
-    signal: signalLast,
+    line:ln,
+    signal:sig,
     histogram:
-      lineLast - signalLast
+      ln!=null&&sig!=null
+        ? ln-sig
+        : null
   };
 }
 
-/* =========================
-   Candle pressure
-   CLOSED candles only
-========================= */
+function candleInfo(c){
+  const range=Math.max(c.high-c.low,1e-12);
+  const body=Math.abs(c.close-c.open);
 
-function pressure(candles) {
-  const recent = candles.slice(-6);
+  const upper=c.high-Math.max(c.open,c.close);
+  const lower=Math.min(c.open,c.close)-c.low;
 
-  if (!recent.length) {
-    return {
-      label: "NEUTRAL",
-      value: 0
-    };
-  }
+  const ratio=body/range;
 
-  let total = 0;
+  let direction =
+    c.close>c.open
+      ? "BUYER"
+      : c.close<c.open
+        ? "SELLER"
+        : "NEUTRAL";
 
-  for (const c of recent) {
-    const range = c.high - c.low;
+  let pattern="NORMAL";
 
-    if (range <= 0) continue;
+  if(c.close>c.open&&ratio>=.65)
+    pattern="STRONG BULLISH";
 
-    total +=
-      (c.close - c.open) / range;
-  }
+  else if(c.close<c.open&&ratio>=.65)
+    pattern="STRONG BEARISH";
 
-  const value =
-    total / recent.length;
+  else if(
+    lower>=body*2 &&
+    lower>=upper*1.3
+  )
+    pattern="HAMMER / BULLISH REJECTION";
 
-  let label = "NEUTRAL";
-
-  if (value >= 0.45) {
-    label = "STRONG BUYER";
-  } else if (value >= 0.12) {
-    label = "BUYER";
-  } else if (value <= -0.45) {
-    label = "STRONG SELLER";
-  } else if (value <= -0.12) {
-    label = "SELLER";
-  }
+  else if(
+    upper>=body*2 &&
+    upper>=lower*1.3
+  )
+    pattern="SHOOTING STAR / BEARISH REJECTION";
 
   return {
-    label,
-    value
+    direction,
+    pattern,
+    range,
+    body,
+    upper,
+    lower,
+    bodyRatio:ratio
   };
 }
 
-/* =========================
-   Candle pattern
-   Uses CLOSED candle
-========================= */
+function pressure(c){
+  const a=c.slice(-6);
 
-function candlePattern(candles) {
-  if (candles.length < 3) {
-    return "NONE";
+  if(!a.length)
+    return {
+      label:"NEUTRAL",
+      score:0
+    };
+
+  let s=0;
+
+  for(const x of a){
+    s+=(x.close-x.open)/
+      Math.max(x.high-x.low,1e-12);
   }
 
-  const a = candles.at(-3);
-  const b = candles.at(-2);
-  const c = candles.at(-1);
+  s/=a.length;
 
-  const cRange = c.high - c.low;
-
-  if (cRange <= 0) {
-    return "NONE";
-  }
-
-  const body =
-    Math.abs(c.close - c.open);
-
-  const upper =
-    c.high - Math.max(c.open, c.close);
-
-  const lower =
-    Math.min(c.open, c.close) - c.low;
-
-  /* Bullish engulfing */
-
-  if (
-    b.close < b.open &&
-    c.close > c.open &&
-    c.open <= b.close &&
-    c.close >= b.open
-  ) {
-    return "BULLISH ENGULFING";
-  }
-
-  /* Bearish engulfing */
-
-  if (
-    b.close > b.open &&
-    c.close < c.open &&
-    c.open >= b.close &&
-    c.close <= b.open
-  ) {
-    return "BEARISH ENGULFING";
-  }
-
-  /* Hammer */
-
-  if (
-    lower >= body * 2 &&
-    upper <= body &&
-    c.close > c.open
-  ) {
-    return "HAMMER";
-  }
-
-  /* Shooting star */
-
-  if (
-    upper >= body * 2 &&
-    lower <= body &&
-    c.close < c.open
-  ) {
-    return "SHOOTING STAR";
-  }
-
-  /* Strong bullish candle */
-
-  if (
-    c.close > c.open &&
-    body / cRange >= 0.65
-  ) {
-    return "STRONG BULLISH CANDLE";
-  }
-
-  /* Strong bearish candle */
-
-  if (
-    c.close < c.open &&
-    body / cRange >= 0.65
-  ) {
-    return "STRONG BEARISH CANDLE";
-  }
-
-  return "NONE";
+  return {
+    label:
+      s>=.35
+        ? "STRONG BUYER"
+        : s>=.10
+          ? "BUYER"
+          : s<=-.35
+            ? "STRONG SELLER"
+            : s<=-.10
+              ? "SELLER"
+              : "NEUTRAL",
+    score:s
+  };
 }
 
-/* =========================
-   Swing support / resistance
-========================= */
+// Swing-based support/resistance.
+// A single extreme wick is not treated as a strong level.
+function supportResistance(c){
+  const r=c.slice(-80);
+  const A=atr(r,14)||0;
 
-function findLevels(candles, atrValue) {
-  const recent = candles.slice(-80);
-
-  if (recent.length < 10) {
+  if(r.length<10)
     return {
-      support: candles.at(-1).low,
-      resistance: candles.at(-1).high
+      support:null,
+      resistance:null
     };
-  }
 
-  const supports = [];
-  const resistances = [];
+  const tol=Math.max(
+    A*.35,
+    Math.abs(r.at(-1).close)*0.00015
+  );
 
-  for (let i = 2; i < recent.length - 2; i++) {
-    const c = recent[i];
+  const lows=[];
+  const highs=[];
 
-    const left1 = recent[i - 1];
-    const left2 = recent[i - 2];
+  for(let i=2;i<r.length-2;i++){
+    const x=r[i];
 
-    const right1 = recent[i + 1];
-    const right2 = recent[i + 2];
-
-    if (
-      c.low <= left1.low &&
-      c.low <= left2.low &&
-      c.low <= right1.low &&
-      c.low <= right2.low
-    ) {
-      supports.push(c.low);
+    if(
+      x.low<=r[i-1].low &&
+      x.low<=r[i-2].low &&
+      x.low<=r[i+1].low &&
+      x.low<=r[i+2].low
+    ){
+      lows.push(x.low);
     }
 
-    if (
-      c.high >= left1.high &&
-      c.high >= left2.high &&
-      c.high >= right1.high &&
-      c.high >= right2.high
-    ) {
-      resistances.push(c.high);
+    if(
+      x.high>=r[i-1].high &&
+      x.high>=r[i-2].high &&
+      x.high>=r[i+1].high &&
+      x.high>=r[i+2].high
+    ){
+      highs.push(x.high);
     }
   }
 
-  const price =
-    candles.at(-1).close;
+  const cluster=(vals,prefer)=>{
+    if(!vals.length)return null;
 
-  const tolerance =
-    Math.max(
-      atrValue || 0,
-      price * 0.0005
-    ) * 1.5;
+    const groups=[];
 
-  function cluster(levels) {
-    const groups = [];
+    for(const v of vals){
+      let g=groups.find(
+        z=>Math.abs(z.center-v)<=tol
+      );
 
-    for (const level of levels) {
-      let found = null;
-
-      for (const group of groups) {
-        if (
-          Math.abs(
-            group.level - level
-          ) <= tolerance
-        ) {
-          found = group;
-          break;
-        }
-      }
-
-      if (found) {
-        found.sum += level;
-        found.count++;
-
-        found.level =
-          found.sum / found.count;
-      } else {
+      if(!g){
         groups.push({
-          level,
-          sum: level,
-          count: 1
+          center:v,
+          count:1
         });
+      }else{
+        g.center=
+          (g.center*g.count+v)/
+          (g.count+1);
+
+        g.count++;
       }
     }
 
-    return groups;
-  }
+    groups.sort((a,b)=>b.count-a.count);
 
-  const sGroups =
-    cluster(supports);
-
-  const rGroups =
-    cluster(resistances);
-
-  const validSupports =
-    sGroups
-      .filter(
-        g => g.level < price
-      )
-      .sort(
-        (a, b) =>
-          b.level - a.level
+    const eligible=
+      groups.filter(
+        g =>
+          prefer==="support"
+            ? g.center<=r.at(-1).close
+            : g.center>=r.at(-1).close
       );
 
-  const validResistances =
-    rGroups
-      .filter(
-        g => g.level > price
-      )
-      .sort(
-        (a, b) =>
-          a.level - b.level
-      );
-
-  const support =
-    validSupports[0]?.level ??
-    Math.min(
-      ...recent.map(
-        c => c.low
-      )
-    );
-
-  const resistance =
-    validResistances[0]?.level ??
-    Math.max(
-      ...recent.map(
-        c => c.high
-      )
-    );
+    return (eligible[0]||groups[0]).center;
+  };
 
   return {
-    support,
-    resistance
+    support:cluster(lows,"support"),
+    resistance:cluster(highs,"resistance")
   };
 }
 
-/* =========================
-   Trend
-========================= */
+function trend(v){
+  const e9=ema(v,9);
+  const e21=ema(v,21);
+  const e50=ema(v,50);
 
-function getTrend(
-  e9,
-  e21,
-  e50,
-  closes
-) {
-  const price =
-    closes.at(-1);
+  if(
+    e9==null||
+    e21==null||
+    e50==null
+  )
+    return "UNKNOWN";
 
-  const previous =
-    closes[
-      Math.max(
-        0,
-        closes.length - 6
-      )
-    ];
-
-  const slope =
-    price - previous;
-
-  if (
-    e9 > e21 &&
-    e21 > e50 &&
-    slope > 0
-  ) {
+  if(e9>e21&&e21>e50)
     return "UPTREND";
-  }
 
-  if (
-    e9 < e21 &&
-    e21 < e50 &&
-    slope < 0
-  ) {
+  if(e9<e21&&e21<e50)
     return "DOWNTREND";
-  }
 
   return "SIDEWAYS";
 }
 
-/* =========================
-   Main analysis engine
-   IMPORTANT:
-   Input must contain CLOSED candles only.
-========================= */
+function analyzeClosed(closed){
+  const v=closed.map(x=>x.close);
 
-function analyze(input) {
+  const p=closed.at(-1);
+  const p2=closed.at(-2);
 
-  const candles = input
-    .filter(c =>
-      Number.isFinite(c.time) &&
-      Number.isFinite(c.open) &&
-      Number.isFinite(c.high) &&
-      Number.isFinite(c.low) &&
-      Number.isFinite(c.close) &&
+  const e9=ema(v,9);
+  const e21=ema(v,21);
+  const e50=ema(v,50);
 
-      c.open > 0 &&
-      c.high > 0 &&
-      c.low > 0 &&
-      c.close > 0 &&
+  const R=rsi(v);
+  const A=atr(closed);
+  const M=macd(v);
 
-      c.high >= c.low &&
-      c.high >= c.open &&
-      c.high >= c.close &&
-      c.low <= c.open &&
-      c.low <= c.close
-    )
-    .sort(
-      (a, b) =>
-        a.time - b.time
-    );
+  const T=trend(v);
+  const P=pressure(closed);
+  const sr=supportResistance(closed);
 
-  if (candles.length < 60) {
-    throw new Error(
-      `Not enough valid closed candles (${candles.length}); need at least 60.`
-    );
+  const ci=candleInfo(p);
+  const c2=candleInfo(p2);
+
+  let buy=0;
+  let sell=0;
+
+  const br=[];
+  const srn=[];
+
+  const add=(side,pts,text)=>{
+    if(side==="buy"){
+      buy+=pts;
+      br.push(text);
+    }else{
+      sell+=pts;
+      srn.push(text);
+    }
+  };
+
+  if(T==="UPTREND")
+    add("buy",18,"EMA 9 > EMA 21 > EMA 50");
+
+  if(T==="DOWNTREND")
+    add("sell",18,"EMA 9 < EMA 21 < EMA 50");
+
+  if(p.close>e21)
+    add("buy",8,"Closed price above EMA21");
+
+  if(p.close<e21)
+    add("sell",8,"Closed price below EMA21");
+
+  if(R!=null){
+    if(R>=52&&R<70)
+      add("buy",8,"RSI bullish zone");
+
+    else if(R>30&&R<=48)
+      add("sell",8,"RSI bearish zone");
+
+    else if(R>=70)
+      add("sell",3,"RSI overbought caution");
+
+    else if(R<=30)
+      add("buy",3,"RSI oversold caution");
   }
 
-  const close =
-    candles.map(
-      c => c.close
-    );
+  if(M.histogram>0)
+    add("buy",12,"MACD histogram bullish");
 
-  /* 
-     IMPORTANT:
-     This is now the latest CLOSED candle.
-  */
-
-  const last =
-    candles.at(-1);
-
-  const previous =
-    candles.at(-2);
-
-  const e9Series =
-    ema(close, 9);
-
-  const e21Series =
-    ema(close, 21);
-
-  const e50Series =
-    ema(close, 50);
-
-  const e9 =
-    e9Series.at(-1);
-
-  const e21 =
-    e21Series.at(-1);
-
-  const e50 =
-    e50Series.at(-1);
-
-  const R =
-    rsi(close, 14);
-
-  const A =
-    atr(candles, 14);
-
-  const M =
-    macd(close);
-
-  const P =
-    pressure(candles);
-
-  const pattern =
-    candlePattern(candles);
-
-  const trend =
-    getTrend(
-      e9,
-      e21,
-      e50,
-      close
-    );
-
-  const levels =
-    findLevels(
-      candles,
-      A
-    );
-
-  const support =
-    levels.support;
-
-  const resistance =
-    levels.resistance;
-
-  const volatility =
-    A ||
-    last.close * 0.0001;
-
-  const momentumBase =
-    close[
-      Math.max(
-        0,
-        close.length - 6
-      )
-    ];
-
-  const momentum =
-    (
-      last.close -
-      momentumBase
-    ) / volatility;
-
-  /* =========================
-     BUY / SELL scoring
-  ========================= */
-
-  let buyScore = 0;
-  let sellScore = 0;
-
-  const reasonsBuy = [];
-  const reasonsSell = [];
-
-  /* Trend */
-
-  if (
-    trend === "UPTREND"
-  ) {
-    buyScore += 18;
-    reasonsBuy.push(
-      "UPTREND"
-    );
-  }
-
-  if (
-    trend === "DOWNTREND"
-  ) {
-    sellScore += 18;
-    reasonsSell.push(
-      "DOWNTREND"
-    );
-  }
-
-  /* EMA */
-
-  if (
-    e9 > e21 &&
-    e21 > e50
-  ) {
-    buyScore += 12;
-
-    reasonsBuy.push(
-      "EMA ALIGNMENT BUY"
-    );
-  }
-
-  if (
-    e9 < e21 &&
-    e21 < e50
-  ) {
-    sellScore += 12;
-
-    reasonsSell.push(
-      "EMA ALIGNMENT SELL"
-    );
-  }
-
-  /* Price vs EMA21 */
-
-  if (
-    last.close > e21
-  ) {
-    buyScore += 7;
-
-    reasonsBuy.push(
-      "PRICE ABOVE EMA21"
-    );
-  }
-
-  if (
-    last.close < e21
-  ) {
-    sellScore += 7;
-
-    reasonsSell.push(
-      "PRICE BELOW EMA21"
-    );
-  }
-
-  /* RSI */
-
-  if (
-    R >= 52 &&
-    R < 70
-  ) {
-    buyScore += 10;
-
-    reasonsBuy.push(
-      "RSI BULLISH"
-    );
-  }
-
-  if (
-    R <= 48 &&
-    R > 30
-  ) {
-    sellScore += 10;
-
-    reasonsSell.push(
-      "RSI BEARISH"
-    );
-  }
-
-  /* Avoid extreme RSI */
-
-  const extremeRsi =
-    R >= 75 ||
-    R <= 25;
-
-  if (extremeRsi) {
-    buyScore -= 10;
-    sellScore -= 10;
-  }
-
-  /* MACD */
-
-  if (
-    M.histogram > 0 &&
-    M.line > M.signal
-  ) {
-    buyScore += 12;
-
-    reasonsBuy.push(
-      "MACD BULLISH"
-    );
-  }
-
-  if (
-    M.histogram < 0 &&
-    M.line < M.signal
-  ) {
-    sellScore += 12;
-
-    reasonsSell.push(
-      "MACD BEARISH"
-    );
-  }
-
-  /* Pressure */
-
-  if (
-    P.label ===
-    "STRONG BUYER"
-  ) {
-    buyScore += 12;
-
-    reasonsBuy.push(
-      "STRONG BUYER PRESSURE"
-    );
-  }
-
-  else if (
-    P.label ===
-    "BUYER"
-  ) {
-    buyScore += 6;
-
-    reasonsBuy.push(
-      "BUYER PRESSURE"
-    );
-  }
-
-  if (
-    P.label ===
-    "STRONG SELLER"
-  ) {
-    sellScore += 12;
-
-    reasonsSell.push(
-      "STRONG SELLER PRESSURE"
-    );
-  }
-
-  else if (
-    P.label ===
-    "SELLER"
-  ) {
-    sellScore += 6;
-
-    reasonsSell.push(
-      "SELLER PRESSURE"
-    );
-  }
-
-  /* Momentum */
-
-  if (
-    momentum >= 0.7
-  ) {
-    buyScore += 8;
-
-    reasonsBuy.push(
-      "POSITIVE MOMENTUM"
-    );
-  }
-
-  if (
-    momentum <= -0.7
-  ) {
-    sellScore += 8;
-
-    reasonsSell.push(
-      "NEGATIVE MOMENTUM"
-    );
-  }
-
-  /* Candle pattern */
-
-  if (
-    pattern ===
-      "BULLISH ENGULFING" ||
-    pattern ===
-      "HAMMER" ||
-    pattern ===
-      "STRONG BULLISH CANDLE"
-  ) {
-    buyScore += 8;
-
-    reasonsBuy.push(
-      pattern
-    );
-  }
-
-  if (
-    pattern ===
-      "BEARISH ENGULFING" ||
-    pattern ===
-      "SHOOTING STAR" ||
-    pattern ===
-      "STRONG BEARISH CANDLE"
-  ) {
-    sellScore += 8;
-
-    reasonsSell.push(
-      pattern
-    );
-  }
-
-  /* =========================
-     Support / Resistance
-  ========================= */
-
-  const supportDistance =
-    Math.abs(
-      last.close -
-      support
-    );
-
-  const resistanceDistance =
-    Math.abs(
-      resistance -
-      last.close
-    );
-
-  const nearSupport =
-    supportDistance <=
-    volatility * 0.45;
-
-  const nearResistance =
-    resistanceDistance <=
-    volatility * 0.45;
-
-  if (
-    nearSupport
-  ) {
-    buyScore += 8;
-
-    reasonsBuy.push(
-      "NEAR SUPPORT"
-    );
-  }
-
-  if (
-    nearResistance
-  ) {
-    sellScore += 8;
-
-    reasonsSell.push(
-      "NEAR RESISTANCE"
-    );
-  }
-
-  /* =========================
-     Rejection candle
-  ========================= */
-
-  const range =
-    last.high -
-    last.low;
-
-  if (range > 0) {
-
-    const lowerWick =
-      Math.min(
-        last.open,
-        last.close
-      ) -
-      last.low;
-
-    const upperWick =
-      last.high -
-      Math.max(
-        last.open,
-        last.close
+  if(M.histogram<0)
+    add("sell",12,"MACD histogram bearish");
+
+  if(P.label==="STRONG BUYER")
+    add("buy",12,"Strong buyer pressure");
+
+  else if(P.label==="BUYER")
+    add("buy",6,"Buyer pressure");
+
+  if(P.label==="STRONG SELLER")
+    add("sell",12,"Strong seller pressure");
+
+  else if(P.label==="SELLER")
+    add("sell",6,"Seller pressure");
+
+  if(ci.direction==="BUYER")
+    add("buy",7,"Previous closed candle was buyer");
+
+  if(ci.direction==="SELLER")
+    add("sell",7,"Previous closed candle was seller");
+
+  if(ci.pattern.includes("BULLISH"))
+    add("buy",5,ci.pattern);
+
+  if(ci.pattern.includes("BEARISH"))
+    add("sell",5,ci.pattern);
+
+  if(
+    ci.direction==="BUYER"&&
+    c2.direction==="BUYER"
+  )
+    add("buy",5,"Two consecutive buyer candles");
+
+  if(
+    ci.direction==="SELLER"&&
+    c2.direction==="SELLER"
+  )
+    add("sell",5,"Two consecutive seller candles");
+
+  const mom=
+    A
+      ? (p.close-closed.at(-6).close)/A
+      : 0;
+
+  if(mom>.5)
+    add("buy",8,"Positive momentum");
+
+  if(mom<-.5)
+    add("sell",8,"Negative momentum");
+
+  const range=
+    (sr.resistance??0)-
+    (sr.support??0);
+
+  if(range>0){
+    const ns=
+      (p.close-sr.support)/range<.12;
+
+    const nr=
+      (sr.resistance-p.close)/range<.12;
+
+    if(ns&&ci.direction==="BUYER")
+      add(
+        "buy",
+        7,
+        "Buyer rejection near support"
       );
 
-    if (
-      nearSupport &&
-      lowerWick / range >=
-        0.45
-    ) {
-      buyScore += 6;
-
-      reasonsBuy.push(
-        "SUPPORT REJECTION"
+    if(nr&&ci.direction==="SELLER")
+      add(
+        "sell",
+        7,
+        "Seller rejection near resistance"
       );
-    }
-
-    if (
-      nearResistance &&
-      upperWick / range >=
-        0.45
-    ) {
-      sellScore += 6;
-
-      reasonsSell.push(
-        "RESISTANCE REJECTION"
-      );
-    }
-  }
-
-  /* =========================
-     Breakout
-  ========================= */
-
-  const previousResistance =
-    Math.max(
-      ...candles
-        .slice(-21, -1)
-        .map(
-          c => c.high
-        )
-    );
-
-  const previousSupport =
-    Math.min(
-      ...candles
-        .slice(-21, -1)
-        .map(
-          c => c.low
-        )
-    );
-
-  if (
-    last.close >
-      previousResistance &&
-    last.close >
-      last.open
-  ) {
-    buyScore += 10;
-
-    reasonsBuy.push(
-      "BREAKOUT UP"
-    );
-  }
-
-  if (
-    last.close <
-      previousSupport &&
-    last.close <
-      last.open
-  ) {
-    sellScore += 10;
-
-    reasonsSell.push(
-      "BREAKOUT DOWN"
-    );
-  }
-
-  /* =========================
-     Previous candle direction
-  ========================= */
-
-  let previousCandleDirection =
-    "NEUTRAL";
-
-  if (
-    last.close >
-    last.open
-  ) {
-    previousCandleDirection =
-      "BUYER";
-  }
-
-  else if (
-    last.close <
-    last.open
-  ) {
-    previousCandleDirection =
-      "SELLER";
-  }
-
-  /* =========================
-     Candle body strength
-  ========================= */
-
-  let candleStrength =
-    "WEAK";
-
-  if (range > 0) {
-
-    const body =
-      Math.abs(
-        last.close -
-        last.open
-      );
-
-    const bodyRatio =
-      body / range;
-
-    if (
-      bodyRatio >= 0.65
-    ) {
-      candleStrength =
-        "STRONG";
-    }
-
-    else if (
-      bodyRatio >= 0.40
-    ) {
-      candleStrength =
-        "MEDIUM";
-    }
-  }
-
-  /* =========================
-     Prevent weak signals
-  ========================= */
-
-  buyScore =
-    Math.round(
-      clamp(
-        buyScore,
-        0,
-        100
-      )
-    );
-
-  sellScore =
-    Math.round(
-      clamp(
-        sellScore,
-        0,
-        100
-      )
-    );
-
-  const difference =
-    Math.abs(
-      buyScore -
-      sellScore
-    );
-
-  let signal =
-    "WAIT";
-
-  let strength =
-    "LOW";
-
-  const directionScore =
-    Math.max(
-      buyScore,
-      sellScore
-    );
-
-  /* =========================
-     STRONG BUY
-  ========================= */
-
-  if (
-    buyScore >= 78 &&
-    buyScore >
-      sellScore + 15 &&
-    trend ===
-      "UPTREND" &&
-    M.histogram > 0 &&
-    P.label !==
-      "STRONG SELLER" &&
-    !extremeRsi
-  ) {
-    signal =
-      "STRONG BUY";
-
-    strength =
-      "VERY HIGH";
-  }
-
-  /* =========================
-     STRONG SELL
-  ========================= */
-
-  else if (
-    sellScore >= 78 &&
-    sellScore >
-      buyScore + 15 &&
-    trend ===
-      "DOWNTREND" &&
-    M.histogram < 0 &&
-    P.label !==
-      "STRONG BUYER" &&
-    !extremeRsi
-  ) {
-    signal =
-      "STRONG SELL";
-
-    strength =
-      "VERY HIGH";
-  }
-
-  /* =========================
-     BUY
-  ========================= */
-
-  else if (
-    buyScore >= 68 &&
-    buyScore >
-      sellScore + 12 &&
-    trend ===
-      "UPTREND" &&
-    M.histogram > 0 &&
-    !extremeRsi
-  ) {
-    signal =
-      "BUY";
-
-    strength =
-      "HIGH";
-  }
-
-  /* =========================
-     SELL
-  ========================= */
-
-  else if (
-    sellScore >= 68 &&
-    sellScore >
-      buyScore + 12 &&
-    trend ===
-      "DOWNTREND" &&
-    M.histogram < 0 &&
-    !extremeRsi
-  ) {
-    signal =
-      "SELL";
-
-    strength =
-      "HIGH";
-  }
-
-  /* =========================
-     WAIT
-  ========================= */
-
-  else {
-
-    signal =
-      "WAIT";
-
-    if (
-      directionScore >= 60 &&
-      difference >= 8
-    ) {
-      strength =
-        "MEDIUM";
-    }
-
-    else {
-      strength =
-        "LOW";
-    }
   }
 
   return {
+    trend:T,
+    pressure:P,
+    support:sr.support,
+    resistance:sr.resistance,
 
+    indicators:{
+      rsi:R,
+      ema9:e9,
+      ema21:e21,
+      ema50:e50,
+      macd:M.line,
+      macdSignal:M.signal,
+      macdHistogram:M.histogram,
+      atr:A,
+      momentum:mom
+    },
+
+    previousCandle:{
+      ...p,
+      direction:ci.direction,
+      pattern:ci.pattern,
+      bodyRatio:ci.bodyRatio
+    },
+
+    previous2Candle:{
+      ...p2,
+      direction:c2.direction,
+      pattern:c2.pattern
+    },
+
+    buyScore:buy,
+    sellScore:sell,
+    confirmationGap:Math.abs(buy-sell),
+
+    buyReasons:br,
+    sellReasons:srn
+  };
+}
+
+function decide(a,mtf){
+  let buy=a.buyScore;
+  let sell=a.sellScore;
+
+  const br=[...a.buyReasons];
+  const sr=[...a.sellReasons];
+
+  const baseTrend=a.trend;
+
+  const mtfBuy=
+    mtf.filter(
+      x=>x.trend==="UPTREND"
+    ).length;
+
+  const mtfSell=
+    mtf.filter(
+      x=>x.trend==="DOWNTREND"
+    ).length;
+
+  if(mtfBuy>mtfSell){
+    buy+=10;
+    br.push(
+      "Higher-timeframe confirmation bullish"
+    );
+  }
+
+  if(mtfSell>mtfBuy){
+    sell+=10;
+    sr.push(
+      "Higher-timeframe confirmation bearish"
+    );
+  }
+
+  const gap=Math.abs(buy-sell);
+  const dom=buy>=sell?"BUY":"SELL";
+
+  let signal="WAIT";
+  let strength="LOW";
+
+  const candleBuyer=
+    a.previousCandle.direction==="BUYER";
+
+  const candleSeller=
+    a.previousCandle.direction==="SELLER";
+
+  // Strict 1M gate.
+  if(
+    baseTrend==="UPTREND"&&
+    buy>=76&&
+    gap>=28&&
+    candleBuyer&&
+    a.pressure.label!=="STRONG SELLER"&&
+    mtfBuy>=1
+  ){
+    signal=
+      buy>=92&&
+      gap>=42&&
+      a.pressure.label==="STRONG BUYER"&&
+      mtfBuy===mtf.length
+        ? "STRONG BUY"
+        : "BUY";
+
+    strength=
+      signal==="STRONG BUY"
+        ? "VERY HIGH"
+        : "HIGH";
+
+  }else if(
+    baseTrend==="DOWNTREND"&&
+    sell>=76&&
+    gap>=28&&
+    candleSeller&&
+    a.pressure.label!=="STRONG BUYER"&&
+    mtfSell>=1
+  ){
+
+    signal=
+      sell>=92&&
+      gap>=42&&
+      a.pressure.label==="STRONG SELLER"&&
+      mtfSell===mtf.length
+        ? "STRONG SELL"
+        : "SELL";
+
+    strength=
+      signal==="STRONG SELL"
+        ? "VERY HIGH"
+        : "HIGH";
+
+  }else if(
+    Math.max(buy,sell)>=58&&
+    gap>=14
+  ){
+    strength="MEDIUM";
+  }
+
+  return {
     signal,
-
     strength,
-
-    score:
-      directionScore,
-
-    buyScore,
-
-    sellScore,
-
-    /* Price of analyzed CLOSED candle */
-
-    price:
-      rnd(
-        last.close,
-        6
-      ),
-
-    /* Direction of analyzed candle */
-
-    previousCandle:
-      previousCandleDirection,
-
-    previousCandleStrength:
-      candleStrength,
-
-    /* Candle timestamp */
-
-    analyzedCandleTime:
-      last.time,
-
-    analyzedCandle:
-      "PREVIOUS CLOSED CANDLE",
-
-    target:
-      "NEXT CANDLE",
-
-    trend,
-
-    pressure:
-      P.label,
-
-    pressureValue:
-      rnd(
-        P.value,
-        3
-      ),
-
-    candlePattern:
-      pattern,
-
-    support:
-      rnd(
-        support,
-        6
-      ),
-
-    resistance:
-      rnd(
-        resistance,
-        6
-      ),
-
-    supportDistance:
-      rnd(
-        supportDistance,
-        6
-      ),
-
-    resistanceDistance:
-      rnd(
-        resistanceDistance,
-        6
-      ),
-
-    momentum:
-      rnd(
-        momentum,
-        2
-      ),
-
-    confirmations: {
-
-      buy:
-        reasonsBuy.slice(
-          0,
-          8
-        ),
-
-      sell:
-        reasonsSell.slice(
-          0,
-          8
-        )
-    },
-
-    indicators: {
-
-      rsi:
-        rnd(
-          R,
-          2
-        ),
-
-      ema9:
-        rnd(
-          e9,
-          6
-        ),
-
-      ema21:
-        rnd(
-          e21,
-          6
-        ),
-
-      ema50:
-        rnd(
-          e50,
-          6
-        ),
-
-      macd:
-        rnd(
-          M.line,
-          8
-        ),
-
-      macdSignal:
-        rnd(
-          M.signal,
-          8
-        ),
-
-      macdHistogram:
-        rnd(
-          M.histogram,
-          8
-        ),
-
-      atr:
-        rnd(
-          A,
-          8
-        )
-    },
-
-    validCandles:
-      candles.length,
-
-    warning:
-      "Previous closed candle confirmation only. Signal strength is not a guaranteed win probability or profit guarantee."
+    buyScore:buy,
+    sellScore:sell,
+    confirmationGap:gap,
+    dominant:dom,
+    buyReasons:br,
+    sellReasons:sr,
+    mtfBuy,
+    mtfSell
   };
 }
 
-/* =========================
-   Yahoo symbol
-========================= */
-
-function yahooSymbol(symbol) {
-
-  let s =
-    String(symbol || "")
-      .trim()
-      .toUpperCase()
-      .replace(
-        /\s+/g,
-        ""
-      );
-
-  if (
-    /^[A-Z]{3}\/[A-Z]{3}$/.test(
-      s
-    )
-  ) {
-    return (
-      s.replace(
-        "/",
-        ""
-      ) +
-      "=X"
-    );
-  }
-
-  if (
-    /^[A-Z]{6}$/.test(
-      s
-    )
-  ) {
-    return (
-      s +
-      "=X"
-    );
-  }
-
-  return s;
+function intervalForSymbol(i){
+  return i;
 }
 
-/* =========================
-   Yahoo interval
-========================= */
-
-function yahooInterval(
-  interval
-) {
-
-  const map = {
-
-    "1min":
-      "1m",
-
-    "5min":
-      "5m",
-
-    "15min":
-      "15m",
-
-    "30min":
-      "30m",
-
-    "45min":
-      "60m",
-
-    "1h":
-      "60m",
-
-    "2h":
-      "60m",
-
-    "4h":
-      "1d",
-
-    "8h":
-      "1d",
-
-    "1day":
-      "1d",
-
-    "1week":
-      "1wk",
-
-    "1month":
-      "1mo"
-  };
-
-  return (
-    map[interval] ||
-    "1m"
-  );
-}
-
-/* =========================
-   Yahoo range
-========================= */
-
-function yahooRange(
-  interval
-) {
-
-  if (
-    interval ===
-    "1min"
-  ) {
-    return "1d";
-  }
-
-  if (
-    interval ===
-      "5min" ||
-    interval ===
-      "15min"
-  ) {
-    return "5d";
-  }
-
-  if (
-    interval ===
-      "30min" ||
-    interval ===
-      "45min" ||
-    interval ===
-      "1h" ||
-    interval ===
-      "2h"
-  ) {
-    return "1mo";
-  }
-
-  if (
-    interval ===
-      "4h" ||
-    interval ===
-      "8h"
-  ) {
-    return "3mo";
-  }
-
-  return "1y";
-}
-
-/* =========================
-   Yahoo candles
-========================= */
-
-async function yahooCandles(
+async function fetchTD(
+  env,
   symbol,
-  interval
-) {
-
-  const ys =
-    yahooSymbol(
-      symbol
-    );
-
-  const url =
-    "https://query1.finance.yahoo.com/v8/finance/chart/" +
+  interval,
+  outputsize
+){
+  const u=
+    "https://api.twelvedata.com/time_series"+
+    "?apikey="+
     encodeURIComponent(
-      ys
-    ) +
-    "?range=" +
-    yahooRange(
-      interval
-    ) +
-    "&interval=" +
-    yahooInterval(
-      interval
+      env.TWELVE_DATA_API_KEY
+    )+
+    "&symbol="+
+    encodeURIComponent(symbol)+
+    "&interval="+
+    encodeURIComponent(
+      intervalForSymbol(interval)
+    )+
+    "&outputsize="+
+    outputsize+
+    "&format=JSON";
+
+  const r=await fetch(u);
+
+  let d={};
+
+  try{
+    d=await r.json();
+  }catch{}
+
+  if(!r.ok||d.status==="error"){
+    const e=new Error(
+      d.message||
+      `Twelve Data HTTP ${r.status}`
     );
 
-  const response =
-    await fetch(
-      url,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 MD-Shawon-Traders"
-        }
+    e.code=d.code||r.status;
+
+    throw e;
+  }
+
+  return normalize(d.values);
+}
+
+function normalize(values){
+  if(!Array.isArray(values))
+    return [];
+
+  return values
+    .map(x=>({
+      datetime:x.datetime,
+      open:n(x.open),
+      high:n(x.high),
+      low:n(x.low),
+      close:n(x.close),
+      volume:n(x.volume)||0
+    }))
+    .filter(
+      x=>
+        x.open!=null&&
+        x.high!=null&&
+        x.low!=null&&
+        x.close!=null
+    )
+    .sort(
+      (a,b)=>
+        new Date(a.datetime)-
+        new Date(b.datetime)
+    );
+}
+
+async function market(request,env){
+
+  if(!env.TWELVE_DATA_API_KEY){
+    return json({
+      ok:false,
+      error:
+        "TWELVE_DATA_API_KEY is missing in Cloudflare."
+    },500);
+  }
+
+  let b={};
+
+  try{
+    b=await request.json();
+  }catch{
+    return json({
+      ok:false,
+      error:"Invalid JSON body."
+    },400);
+  }
+
+  const symbol=
+    normalizeSymbol(b.symbol);
+
+  const interval=
+    String(
+      b.interval||
+      DEFAULT_INTERVAL
+    ).trim();
+
+  const mode=
+    String(
+      b.mode||
+      "REAL"
+    ).toUpperCase();
+
+  const outputsize=
+    clamp(
+      Number(b.outputsize)||120,
+      70,
+      500
+    );
+
+  if(mode==="OTC"){
+    return json({
+      ok:false,
+      signal:"WAIT",
+      mode:"OTC",
+      error:
+        "Verified Quotex OTC feed is not connected. No fake OTC signal will be generated."
+    },503);
+  }
+
+  if(!ALLOWED.has(interval)){
+    return json({
+      ok:false,
+      error:
+        `Unsupported interval: ${interval}`
+    },400);
+  }
+
+  try{
+
+    const raw=
+      await fetchTD(
+        env,
+        symbol,
+        interval,
+        outputsize
+      );
+
+    if(raw.length<62){
+      return json({
+        ok:false,
+        error:
+          `Only ${raw.length} valid candles returned; at least 62 are required.`
+      },502);
+    }
+
+    // Never use newest provider candle
+    // as the closed candle.
+    const live=raw.at(-1);
+    const closed=raw.slice(0,-1);
+
+    const base=
+      analyzeClosed(closed);
+
+    // MTF confirmation.
+    const mtfIntervals=
+      MTF[interval]||[];
+
+    const mtf=[];
+
+    for(const tf of mtfIntervals){
+
+      const d=
+        await fetchTD(
+          env,
+          symbol,
+          tf,
+          100
+        );
+
+      if(d.length<62){
+        throw new Error(
+          `Not enough ${tf} candles for MTF confirmation.`
+        );
       }
-    );
 
-  const text =
-    await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `Yahoo market-data HTTP ${response.status}`
-    );
-  }
-
-  let data;
-
-  try {
-    data =
-      JSON.parse(
-        text
-      );
-  } catch {
-    throw new Error(
-      "Yahoo returned invalid data"
-    );
-  }
-
-  if (
-    data?.chart?.error
-  ) {
-    throw new Error(
-      data.chart.error.description ||
-      "Yahoo market-data error"
-    );
-  }
-
-  const result =
-    data?.chart?.result?.[0];
-
-  const quote =
-    result?.indicators?.quote?.[0];
-
-  const timestamps =
-    result?.timestamp ||
-    [];
-
-  if (!quote) {
-    throw new Error(
-      "No market data returned for this symbol"
-    );
-  }
-
-  const candles = [];
-
-  for (
-    let i = 0;
-    i < timestamps.length;
-    i++
-  ) {
-
-    const open =
-      num(
-        quote.open?.[i]
-      );
-
-    const high =
-      num(
-        quote.high?.[i]
-      );
-
-    const low =
-      num(
-        quote.low?.[i]
-      );
-
-    const close =
-      num(
-        quote.close?.[i]
-      );
-
-    if (
-      open !== null &&
-      high !== null &&
-      low !== null &&
-      close !== null &&
-
-      open > 0 &&
-      high > 0 &&
-      low > 0 &&
-      close > 0 &&
-
-      high >= low &&
-      high >= open &&
-      high >= close &&
-      low <= open &&
-      low <= close
-    ) {
-
-      candles.push({
-
-        time:
-          Number(
-            timestamps[i]
-          ),
-
-        open,
-
-        high,
-
-        low,
-
-        close,
-
-        volume:
-          num(
-            quote.volume?.[i]
-          ) || 0
+      mtf.push({
+        interval:tf,
+        ...analyzeClosed(
+          d.slice(0,-1)
+        )
       });
     }
+
+    const decision=
+      decide(base,mtf);
+
+    return json({
+
+      ok:true,
+
+      app:APP,
+
+      version:VERSION,
+
+      source:"Twelve Data",
+
+      mode:"REAL",
+
+      symbol,
+
+      interval,
+
+      livePrice:
+        rnd(live.close,8),
+
+      liveCandle:{
+        datetime:live.datetime,
+        open:rnd(live.open,8),
+        high:rnd(live.high,8),
+        low:rnd(live.low,8),
+        close:rnd(live.close,8)
+      },
+
+      analyzedCandle:
+        "PREVIOUS CLOSED CANDLE",
+
+      targetCandle:
+        "NEXT CANDLE",
+
+      analyzedPrice:
+        rnd(
+          base.previousCandle.close,
+          8
+        ),
+
+      signal:
+        decision.signal,
+
+      strength:
+        decision.strength,
+
+      score:
+        Math.round(
+          clamp(
+            50+
+            (decision.buyScore-
+             decision.sellScore)*.55,
+            0,
+            100
+          )
+        ),
+
+      buyScore:
+        decision.buyScore,
+
+      sellScore:
+        decision.sellScore,
+
+      confirmationGap:
+        decision.confirmationGap,
+
+      dominant:
+        decision.dominant,
+
+      trend:
+        base.trend,
+
+      pressure:
+        base.pressure.label,
+
+      pressureScore:
+        rnd(
+          base.pressure.score,
+          3
+        ),
+
+      support:
+        rnd(base.support,8),
+
+      resistance:
+        rnd(base.resistance,8),
+
+      previousCandle:{
+        datetime:
+          base.previousCandle.datetime,
+
+        open:
+          rnd(
+            base.previousCandle.open,
+            8
+          ),
+
+        high:
+          rnd(
+            base.previousCandle.high,
+            8
+          ),
+
+        low:
+          rnd(
+            base.previousCandle.low,
+            8
+          ),
+
+        close:
+          rnd(
+            base.previousCandle.close,
+            8
+          ),
+
+        direction:
+          base.previousCandle.direction,
+
+        pattern:
+          base.previousCandle.pattern,
+
+        bodyRatio:
+          rnd(
+            base.previousCandle.bodyRatio,
+            3
+          )
+      },
+
+      indicators:
+        Object.fromEntries(
+          Object.entries(
+            base.indicators
+          ).map(
+            ([k,v])=>[
+              k,
+              rnd(
+                v,
+                k==="rsi"||
+                k==="momentum"
+                  ? 2
+                  : 10
+              )
+            ]
+          )
+        ),
+
+      mtf:
+        mtf.map(x=>({
+          interval:x.interval,
+          trend:x.trend,
+          pressure:x.pressure.label,
+          rsi:rnd(
+            x.indicators.rsi,
+            2
+          )
+        })),
+
+      confirmations:{
+        buy:
+          decision.buyReasons,
+
+        sell:
+          decision.sellReasons
+      },
+
+      candleCount:
+        raw.length,
+
+      closedCandleCount:
+        closed.length,
+
+      warning:
+        "Indicator strength is not win probability. No signal guarantees profit."
+    });
+
+  }catch(e){
+
+    return json({
+      ok:false,
+      signal:"WAIT",
+      error:
+        "Market analysis failed.",
+      details:
+        e?.message||
+        "Unknown error",
+      code:
+        e?.code||
+        null
+    },502);
   }
-
-  return candles;
 }
-
-/* =========================
-   Worker
-========================= */
 
 export default {
 
-  async fetch(
-    request,
-    env
-  ) {
+  async fetch(request,env){
 
-    /* OPTIONS */
-
-    if (
-      request.method ===
-      "OPTIONS"
-    ) {
-
+    if(request.method==="OPTIONS"){
       return new Response(
         null,
         {
-          status: 204,
-          headers: CORS
+          status:204,
+          headers:CORS
         }
       );
     }
 
-    const url =
-      new URL(
-        request.url
-      );
-
-    try {
-
-      /* =========================
-         HOME
-      ========================= */
-
-      if (
-        url.pathname === "/" &&
-        request.method === "GET"
-      ) {
-
-        return json({
-
-          ok: true,
-
-          app:
-            APP,
-
-          version:
-            VERSION,
-
-          provider:
-            "Yahoo Finance chart",
-
-          analysisMode:
-            "PREVIOUS CLOSED CANDLE",
-
-          target:
-            "NEXT CANDLE",
-
-          note:
-            "Real-market indicator analysis. OTC is never faked."
-        });
-      }
-
-      /* =========================
-         DEBUG
-      ========================= */
-
-      if (
-        url.pathname ===
-          "/debug" &&
-        request.method === "GET"
-      ) {
-
-        return json({
-
-          ok: true,
-
-          app:
-            APP,
-
-          version:
-            VERSION,
-
-          provider:
-            "Yahoo Finance chart",
-
-          twelveDataApiKeyConfigured:
-            Boolean(
-              env.TWELVE_DATA_API_KEY
-            )
-        });
-      }
-
-      /* =========================
-         MARKET
-      ========================= */
-
-      if (
-        url.pathname ===
-          "/market" &&
-        request.method === "POST"
-      ) {
-
-        const body =
-          await request
-            .json()
-            .catch(
-              () => ({})
-            );
-
-        const symbol =
-          body.symbol ||
-          "EUR/USD";
-
-        const interval =
-          body.interval ||
-          "1min";
-
-        const mode =
-          String(
-            body.mode ||
-            "REAL"
-          ).toUpperCase();
-
-        /* =========================
-           NEVER FAKE OTC
-        ========================= */
-
-        if (
-          mode === "OTC"
-        ) {
-
-          return json(
-            {
-
-              ok: false,
-
-              signal:
-                "WAIT",
-
-              strength:
-                "LOW",
-
-              error:
-                "OTC data is not available from this provider. No fake OTC signal will be generated."
-            },
-            503
-          );
-        }
-
-        /* =========================
-           GET MARKET DATA
-        ========================= */
-
-        const allCandles =
-          await yahooCandles(
-            symbol,
-            interval
-          );
-
-        if (
-          allCandles.length <
-          61
-        ) {
-          throw new Error(
-            `Not enough market candles (${allCandles.length}); need at least 61 so one latest candle can be excluded.`
-          );
-        }
-
-        /*
-          IMPORTANT:
-
-          Yahoo-এর সর্বশেষ candle
-          current / possibly still-forming
-          candle হিসেবে বাদ দেওয়া হচ্ছে।
-
-          তার আগের candle-ই
-          analysis candle।
-        */
-
-        const liveCandle =
-          allCandles.at(-1);
-
-        const closedCandles =
-          allCandles.slice(
-            0,
-            -1
-          );
-
-        if (
-          closedCandles.length <
-          60
-        ) {
-          throw new Error(
-            `Not enough closed candles (${closedCandles.length}); need at least 60.`
-          );
-        }
-
-        /* =========================
-           ANALYZE PREVIOUS CLOSED
-        ========================= */
-
-        const analysis =
-          analyze(
-            closedCandles
-          );
-
-        /* =========================
-           LIVE CURRENT CANDLE INFO
-        ========================= */
-
-        const livePrice =
-          liveCandle?.close ??
-          null;
-
-        return json({
-
-          ok: true,
-
-          app:
-            APP,
-
-          version:
-            VERSION,
-
-          provider:
-            "Yahoo Finance chart",
-
-          symbol,
-
-          interval,
-
-          mode,
-
-          candleCount:
-            allCandles.length,
-
-          closedCandleCount:
-            closedCandles.length,
-
-          liveCandle: {
-
-            time:
-              liveCandle?.time ??
-              null,
-
-            open:
-              rnd(
-                liveCandle?.open,
-                6
-              ),
-
-            high:
-              rnd(
-                liveCandle?.high,
-                6
-              ),
-
-            low:
-              rnd(
-                liveCandle?.low,
-                6
-              ),
-
-            close:
-              rnd(
-                liveCandle?.close,
-                6
-              )
-          },
-
-          livePrice:
-            rnd(
-              livePrice,
-              6
-            ),
-
-          analysis
-
-        });
-      }
-
-      /* =========================
-         NOT FOUND
-      ========================= */
-
-      return json(
-        {
-          ok: false,
-          error:
-            "Not found"
+    const u=
+      new URL(request.url);
+
+    if(
+      request.method==="GET"&&
+      u.pathname==="/"
+    ){
+      return json({
+
+        ok:true,
+
+        app:APP,
+
+        version:VERSION,
+
+        worker:"online",
+
+        provider:"Twelve Data",
+
+        primaryTimeframe:"1min",
+
+        features:[
+          "closed-candle analysis",
+          "EMA",
+          "RSI",
+          "MACD",
+          "ATR",
+          "momentum",
+          "buyer/seller pressure",
+          "swing support/resistance",
+          "MTF confirmation",
+          "strict WAIT gate"
+        ],
+
+        endpoints:{
+          health:"GET /",
+          debug:"GET /debug",
+          market:"POST /market"
         },
-        404
-      );
 
-    } catch (error) {
+        note:
+          "Real market only. Quotex OTC is blocked until a verified OTC feed is connected."
+      });
+    }
 
-      return json(
-        {
+    if(
+      request.method==="GET"&&
+      u.pathname==="/debug"
+    ){
+      return json({
 
-          ok: false,
+        ok:true,
 
-          signal:
-            "WAIT",
+        app:APP,
 
-          strength:
-            "LOW",
+        version:VERSION,
 
-          error:
-            error?.message ||
-            "Unknown server error"
+        provider:"Twelve Data",
 
-        },
-        500
+        twelveDataApiKeyConfigured:
+          Boolean(
+            env.TWELVE_DATA_API_KEY
+          )
+      });
+    }
+
+    if(
+      request.method==="POST"&&
+      u.pathname==="/market"
+    ){
+      return market(
+        request,
+        env
       );
     }
+
+    if(
+      request.method==="POST"&&
+      u.pathname==="/chat"
+    ){
+      return json({
+        ok:false,
+        available:false,
+        message:
+          "AI chat is not enabled because no paid AI API is configured. Local rule-based market analysis remains available."
+      },503);
+    }
+
+    return json({
+      ok:false,
+      error:"Endpoint not found."
+    },404);
   }
 };
