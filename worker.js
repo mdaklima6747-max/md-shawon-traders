@@ -1,190 +1,260 @@
-// MD Shawon Traders — Worker 4.0.0
-// 1-minute-first real-market signal engine.
-// No fake Quotex OTC data. No AI API required.
-// IMPORTANT: This is an indicator engine, not a profit/win-rate guarantee.
+// MD Shawon Traders — Worker v4.0
+// Real-market analysis through Twelve Data.
+// OTC remains WAIT until a verified Quotex OTC feed is connected.
+// No paid AI required.
 
 const APP = "MD Shawon Traders";
 const VERSION = "4.0.0";
-const DEFAULT_SYMBOL = "EUR/USD";
-const DEFAULT_INTERVAL = "1min";
 
-const ALLOWED = new Set([
-  "1min","5min","15min","30min","45min",
-  "1h","2h","4h","8h","1day","1week","1month"
+const INTERVALS = new Set([
+  "1min",
+  "5min",
+  "15min",
+  "30min",
+  "45min",
+  "1h",
+  "2h",
+  "4h",
+  "8h",
+  "1day",
+  "1week",
+  "1month"
 ]);
 
-const MTF = {
-  "1min":["5min","15min"],
-  "5min":["15min","1h"],
-  "15min":["1h","4h"]
-};
-
 const CORS = {
-  "Access-Control-Allow-Origin":"*",
-  "Access-Control-Allow-Methods":"GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers":"Content-Type, Authorization",
-  "Content-Type":"application/json; charset=utf-8"
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Content-Type": "application/json; charset=utf-8"
 };
 
-const json = (x,s=200) =>
-  new Response(JSON.stringify(x),{status:s,headers:CORS});
-
-const n = x => {
-  const v = Number(x);
-  return Number.isFinite(v) ? v : null;
-};
-
-const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
-
-const rnd = (x,d=6) =>
-  x==null ? null : Math.round(x*10**d)/10**d;
-
-function normalizeSymbol(s){
-  return String(s||DEFAULT_SYMBOL)
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g,"");
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: CORS
+  });
 }
 
-function emaSeries(v,p){
-  if(!Array.isArray(v)||v.length<p)return [];
+function num(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
-  const out=Array(v.length).fill(null);
+function clamp(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v));
+}
 
-  let e=0;
-  for(let i=0;i<p;i++) e+=v[i];
+function rnd(v, d = 6) {
+  return v == null ? null : Math.round(v * 10 ** d) / 10 ** d;
+}
 
-  e/=p;
-  out[p-1]=e;
+function normalizeSymbol(symbol) {
+  return String(symbol || "EUR/USD")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+}
 
-  const k=2/(p+1);
+function normalizeCandles(values) {
+  if (!Array.isArray(values)) return [];
 
-  for(let i=p;i<v.length;i++){
-    e=v[i]*k+e*(1-k);
-    out[i]=e;
+  return values
+    .map(x => ({
+      datetime: x.datetime,
+      open: num(x.open),
+      high: num(x.high),
+      low: num(x.low),
+      close: num(x.close),
+      volume: num(x.volume) || 0
+    }))
+    .filter(
+      x =>
+        x.open !== null &&
+        x.high !== null &&
+        x.low !== null &&
+        x.close !== null
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.datetime).getTime() -
+        new Date(b.datetime).getTime()
+    );
+}
+
+function emaSeries(values, period) {
+  if (!Array.isArray(values) || values.length < period) return [];
+
+  const out = new Array(values.length).fill(null);
+
+  let e = 0;
+
+  for (let i = 0; i < period; i++) {
+    e += values[i];
+  }
+
+  e /= period;
+  out[period - 1] = e;
+
+  const k = 2 / (period + 1);
+
+  for (let i = period; i < values.length; i++) {
+    e = values[i] * k + e * (1 - k);
+    out[i] = e;
   }
 
   return out;
 }
 
-const last = a => a?.length ? a[a.length-1] : null;
-
-const ema = (v,p) => last(emaSeries(v,p));
-
-function rsi(v,p=14){
-  if(!v||v.length<=p)return null;
-
-  let g=0,l=0;
-
-  for(let i=1;i<=p;i++){
-    const d=v[i]-v[i-1];
-
-    if(d>0) g+=d;
-    else l-=d;
-  }
-
-  let ag=g/p;
-  let al=l/p;
-
-  for(let i=p+1;i<v.length;i++){
-    const d=v[i]-v[i-1];
-    const gg=Math.max(d,0);
-    const ll=Math.max(-d,0);
-
-    ag=(ag*(p-1)+gg)/p;
-    al=(al*(p-1)+ll)/p;
-  }
-
-  return al===0 ? 100 : 100-100/(1+ag/al);
+function ema(values, period) {
+  const s = emaSeries(values, period);
+  return s.length ? s.at(-1) : null;
 }
 
-function atr(c,p=14){
-  if(!c||c.length<=p)return null;
+function rsi(values, period = 14) {
+  if (!Array.isArray(values) || values.length <= period) {
+    return null;
+  }
 
-  const tr=[];
+  let gain = 0;
+  let loss = 0;
 
-  for(let i=1;i<c.length;i++){
-    const x=c[i];
-    const q=c[i-1];
+  for (let i = 1; i <= period; i++) {
+    const d = values[i] - values[i - 1];
+
+    if (d > 0) gain += d;
+    else loss -= d;
+  }
+
+  let avgGain = gain / period;
+  let avgLoss = loss / period;
+
+  for (let i = period + 1; i < values.length; i++) {
+    const d = values[i] - values[i - 1];
+
+    const g = Math.max(d, 0);
+    const l = Math.max(-d, 0);
+
+    avgGain =
+      ((avgGain * (period - 1)) + g) / period;
+
+    avgLoss =
+      ((avgLoss * (period - 1)) + l) / period;
+  }
+
+  if (avgLoss === 0) return 100;
+
+  return 100 - 100 / (1 + avgGain / avgLoss);
+}
+
+function atr(candles, period = 14) {
+  if (!Array.isArray(candles) || candles.length <= period) {
+    return null;
+  }
+
+  const tr = [];
+
+  for (let i = 1; i < candles.length; i++) {
+    const c = candles[i];
+    const p = candles[i - 1];
 
     tr.push(
       Math.max(
-        x.high-x.low,
-        Math.abs(x.high-q.close),
-        Math.abs(x.low-q.close)
+        c.high - c.low,
+        Math.abs(c.high - p.close),
+        Math.abs(c.low - p.close)
       )
     );
   }
 
-  let a=tr.slice(0,p)
-    .reduce((x,y)=>x+y,0)/p;
+  if (tr.length < period) return null;
 
-  for(let i=p;i<tr.length;i++){
-    a=(a*(p-1)+tr[i])/p;
+  let a =
+    tr.slice(0, period)
+      .reduce((x, y) => x + y, 0) / period;
+
+  for (let i = period; i < tr.length; i++) {
+    a =
+      ((a * (period - 1)) + tr[i]) / period;
   }
 
   return a;
 }
 
-function macd(v){
-  const e12=emaSeries(v,12);
-  const e26=emaSeries(v,26);
-  const line=[];
+function macd(values) {
+  if (!Array.isArray(values) || values.length < 40) {
+    return {
+      line: null,
+      signal: null,
+      histogram: null
+    };
+  }
 
-  for(let i=0;i<v.length;i++){
-    if(e12[i]!=null&&e26[i]!=null){
-      line.push(e12[i]-e26[i]);
+  const e12 = emaSeries(values, 12);
+  const e26 = emaSeries(values, 26);
+
+  const line = [];
+
+  for (let i = 0; i < values.length; i++) {
+    if (e12[i] != null && e26[i] != null) {
+      line.push(e12[i] - e26[i]);
     }
   }
 
-  const sig=ema(line,9);
-  const ln=last(line);
+  if (line.length < 9) {
+    return {
+      line: line.at(-1) ?? null,
+      signal: null,
+      histogram: null
+    };
+  }
+
+  const signal = ema(line, 9);
+  const last = line.at(-1);
 
   return {
-    line:ln,
-    signal:sig,
+    line: last,
+    signal,
     histogram:
-      ln!=null&&sig!=null
-        ? ln-sig
-        : null
+      signal == null ? null : last - signal
   };
 }
 
-function candleInfo(c){
-  const range=Math.max(c.high-c.low,1e-12);
-  const body=Math.abs(c.close-c.open);
+function candleInfo(c) {
+  const range = Math.max(c.high - c.low, 1e-12);
+  const body = Math.abs(c.close - c.open);
 
-  const upper=c.high-Math.max(c.open,c.close);
-  const lower=Math.min(c.open,c.close)-c.low;
+  const upper =
+    c.high - Math.max(c.open, c.close);
 
-  const ratio=body/range;
+  const lower =
+    Math.min(c.open, c.close) - c.low;
+
+  const bodyRatio = body / range;
 
   let direction =
-    c.close>c.open
+    c.close > c.open
       ? "BUYER"
-      : c.close<c.open
-        ? "SELLER"
-        : "NEUTRAL";
+      : c.close < c.open
+      ? "SELLER"
+      : "NEUTRAL";
 
-  let pattern="NORMAL";
+  let pattern = "NORMAL";
 
-  if(c.close>c.open&&ratio>=.65)
-    pattern="STRONG BULLISH";
-
-  else if(c.close<c.open&&ratio>=.65)
-    pattern="STRONG BEARISH";
-
-  else if(
-    lower>=body*2 &&
-    lower>=upper*1.3
-  )
-    pattern="HAMMER / BULLISH REJECTION";
-
-  else if(
-    upper>=body*2 &&
-    upper>=lower*1.3
-  )
-    pattern="SHOOTING STAR / BEARISH REJECTION";
+  if (c.close > c.open && bodyRatio >= 0.65) {
+    pattern = "STRONG BULLISH";
+  } else if (c.close < c.open && bodyRatio >= 0.65) {
+    pattern = "STRONG BEARISH";
+  } else if (
+    lower >= body * 2 &&
+    lower >= upper * 1.3
+  ) {
+    pattern = "HAMMER / BULLISH REJECTION";
+  } else if (
+    upper >= body * 2 &&
+    upper >= lower * 1.3
+  ) {
+    pattern = "SHOOTING STAR / BEARISH REJECTION";
+  }
 
   return {
     direction,
@@ -193,932 +263,746 @@ function candleInfo(c){
     body,
     upper,
     lower,
-    bodyRatio:ratio
+    bodyRatio
   };
 }
 
-function pressure(c){
-  const a=c.slice(-6);
+function pressure(candles) {
+  const recent = candles.slice(-6);
 
-  if(!a.length)
+  if (!recent.length) {
     return {
-      label:"NEUTRAL",
-      score:0
+      label: "NEUTRAL",
+      score: 0
     };
-
-  let s=0;
-
-  for(const x of a){
-    s+=(x.close-x.open)/
-      Math.max(x.high-x.low,1e-12);
   }
 
-  s/=a.length;
+  let score = 0;
 
-  return {
-    label:
-      s>=.35
-        ? "STRONG BUYER"
-        : s>=.10
-          ? "BUYER"
-          : s<=-.35
-            ? "STRONG SELLER"
-            : s<=-.10
-              ? "SELLER"
-              : "NEUTRAL",
-    score:s
-  };
-}
+  for (const c of recent) {
+    const info = candleInfo(c);
 
-// Swing-based support/resistance.
-// A single extreme wick is not treated as a strong level.
-function supportResistance(c){
-  const r=c.slice(-80);
-  const A=atr(r,14)||0;
+    const signedBody =
+      (c.close - c.open) / info.range;
 
-  if(r.length<10)
-    return {
-      support:null,
-      resistance:null
-    };
-
-  const tol=Math.max(
-    A*.35,
-    Math.abs(r.at(-1).close)*0.00015
-  );
-
-  const lows=[];
-  const highs=[];
-
-  for(let i=2;i<r.length-2;i++){
-    const x=r[i];
-
-    if(
-      x.low<=r[i-1].low &&
-      x.low<=r[i-2].low &&
-      x.low<=r[i+1].low &&
-      x.low<=r[i+2].low
-    ){
-      lows.push(x.low);
-    }
-
-    if(
-      x.high>=r[i-1].high &&
-      x.high>=r[i-2].high &&
-      x.high>=r[i+1].high &&
-      x.high>=r[i+2].high
-    ){
-      highs.push(x.high);
-    }
+    score += signedBody;
   }
 
-  const cluster=(vals,prefer)=>{
-    if(!vals.length)return null;
+  score /= recent.length;
 
-    const groups=[];
+  if (score >= 0.35) {
+    return {
+      label: "STRONG BUYER",
+      score
+    };
+  }
 
-    for(const v of vals){
-      let g=groups.find(
-        z=>Math.abs(z.center-v)<=tol
-      );
+  if (score >= 0.10) {
+    return {
+      label: "BUYER",
+      score
+    };
+  }
 
-      if(!g){
-        groups.push({
-          center:v,
-          count:1
-        });
-      }else{
-        g.center=
-          (g.center*g.count+v)/
-          (g.count+1);
+  if (score <= -0.35) {
+    return {
+      label: "STRONG SELLER",
+      score
+    };
+  }
 
-        g.count++;
-      }
-    }
-
-    groups.sort((a,b)=>b.count-a.count);
-
-    const eligible=
-      groups.filter(
-        g =>
-          prefer==="support"
-            ? g.center<=r.at(-1).close
-            : g.center>=r.at(-1).close
-      );
-
-    return (eligible[0]||groups[0]).center;
-  };
+  if (score <= -0.10) {
+    return {
+      label: "SELLER",
+      score
+    };
+  }
 
   return {
-    support:cluster(lows,"support"),
-    resistance:cluster(highs,"resistance")
+    label: "NEUTRAL",
+    score
   };
 }
 
-function trend(v){
-  const e9=ema(v,9);
-  const e21=ema(v,21);
-  const e50=ema(v,50);
+function supportResistance(candles) {
+  const r = candles.slice(-60);
 
-  if(
-    e9==null||
-    e21==null||
-    e50==null
-  )
+  if (!r.length) {
+    return {
+      support: null,
+      resistance: null
+    };
+  }
+
+  const lows = r.map(x => x.low);
+  const highs = r.map(x => x.high);
+
+  return {
+    support: Math.min(...lows),
+    resistance: Math.max(...highs)
+  };
+}
+
+function trend(closes) {
+  const e9 = ema(closes, 9);
+  const e21 = ema(closes, 21);
+  const e50 = ema(closes, 50);
+
+  if (
+    e9 == null ||
+    e21 == null ||
+    e50 == null
+  ) {
     return "UNKNOWN";
+  }
 
-  if(e9>e21&&e21>e50)
+  if (e9 > e21 && e21 > e50) {
     return "UPTREND";
+  }
 
-  if(e9<e21&&e21<e50)
+  if (e9 < e21 && e21 < e50) {
     return "DOWNTREND";
+  }
 
   return "SIDEWAYS";
 }
 
-function analyzeClosed(closed){
-  const v=closed.map(x=>x.close);
-
-  const p=closed.at(-1);
-  const p2=closed.at(-2);
-
-  const e9=ema(v,9);
-  const e21=ema(v,21);
-  const e50=ema(v,50);
-
-  const R=rsi(v);
-  const A=atr(closed);
-  const M=macd(v);
-
-  const T=trend(v);
-  const P=pressure(closed);
-  const sr=supportResistance(closed);
-
-  const ci=candleInfo(p);
-  const c2=candleInfo(p2);
-
-  let buy=0;
-  let sell=0;
-
-  const br=[];
-  const srn=[];
-
-  const add=(side,pts,text)=>{
-    if(side==="buy"){
-      buy+=pts;
-      br.push(text);
-    }else{
-      sell+=pts;
-      srn.push(text);
-    }
-  };
-
-  if(T==="UPTREND")
-    add("buy",18,"EMA 9 > EMA 21 > EMA 50");
-
-  if(T==="DOWNTREND")
-    add("sell",18,"EMA 9 < EMA 21 < EMA 50");
-
-  if(p.close>e21)
-    add("buy",8,"Closed price above EMA21");
-
-  if(p.close<e21)
-    add("sell",8,"Closed price below EMA21");
-
-  if(R!=null){
-    if(R>=52&&R<70)
-      add("buy",8,"RSI bullish zone");
-
-    else if(R>30&&R<=48)
-      add("sell",8,"RSI bearish zone");
-
-    else if(R>=70)
-      add("sell",3,"RSI overbought caution");
-
-    else if(R<=30)
-      add("buy",3,"RSI oversold caution");
+function analyze(rawCandles) {
+  if (
+    !Array.isArray(rawCandles) ||
+    rawCandles.length < 60
+  ) {
+    return {
+      ok: false,
+      error:
+        `Not enough candle data (${rawCandles?.length || 0}); ` +
+        `need at least 60 candles.`
+    };
   }
 
-  if(M.histogram>0)
-    add("buy",12,"MACD histogram bullish");
+  const candles = rawCandles
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a.datetime).getTime() -
+        new Date(b.datetime).getTime()
+    );
 
-  if(M.histogram<0)
-    add("sell",12,"MACD histogram bearish");
+  const live = candles.at(-1);
+  const closed = candles.slice(0, -1);
 
-  if(P.label==="STRONG BUYER")
-    add("buy",12,"Strong buyer pressure");
+  if (closed.length < 60) {
+    return {
+      ok: false,
+      error:
+        "Not enough closed candles after excluding newest candle."
+    };
+  }
 
-  else if(P.label==="BUYER")
-    add("buy",6,"Buyer pressure");
+  const closes = closed.map(x => x.close);
 
-  if(P.label==="STRONG SELLER")
-    add("sell",12,"Strong seller pressure");
+  const previous = closed.at(-1);
+  const previous2 = closed.at(-2);
 
-  else if(P.label==="SELLER")
-    add("sell",6,"Seller pressure");
+  const e9 = ema(closes, 9);
+  const e21 = ema(closes, 21);
+  const e50 = ema(closes, 50);
 
-  if(ci.direction==="BUYER")
-    add("buy",7,"Previous closed candle was buyer");
+  const R = rsi(closes, 14);
+  const A = atr(closed, 14);
+  const M = macd(closes);
+  const T = trend(closes);
+  const P = pressure(closed);
+  const sr = supportResistance(closed);
 
-  if(ci.direction==="SELLER")
-    add("sell",7,"Previous closed candle was seller");
+  const info = candleInfo(previous);
+  const prev2Info = candleInfo(previous2);
 
-  if(ci.pattern.includes("BULLISH"))
-    add("buy",5,ci.pattern);
+  let buy = 0;
+  let sell = 0;
 
-  if(ci.pattern.includes("BEARISH"))
-    add("sell",5,ci.pattern);
+  const buyReasons = [];
+  const sellReasons = [];
 
-  if(
-    ci.direction==="BUYER"&&
-    c2.direction==="BUYER"
-  )
-    add("buy",5,"Two consecutive buyer candles");
+  if (T === "UPTREND") {
+    buy += 18;
+    buyReasons.push("EMA 9 > EMA 21 > EMA 50");
+  }
 
-  if(
-    ci.direction==="SELLER"&&
-    c2.direction==="SELLER"
-  )
-    add("sell",5,"Two consecutive seller candles");
+  if (T === "DOWNTREND") {
+    sell += 18;
+    sellReasons.push("EMA 9 < EMA 21 < EMA 50");
+  }
 
-  const mom=
+  if (previous.close > e21) {
+    buy += 8;
+    buyReasons.push("Closed price above EMA21");
+  }
+
+  if (previous.close < e21) {
+    sell += 8;
+    sellReasons.push("Closed price below EMA21");
+  }
+
+  if (R != null) {
+    if (R >= 52 && R < 70) {
+      buy += 8;
+      buyReasons.push("RSI supports bullish momentum");
+    } else if (R > 30 && R <= 48) {
+      sell += 8;
+      sellReasons.push("RSI supports bearish momentum");
+    } else if (R >= 70) {
+      sell += 3;
+      sellReasons.push("RSI overbought caution");
+    } else if (R <= 30) {
+      buy += 3;
+      buyReasons.push("RSI oversold rebound caution");
+    }
+  }
+
+  if (
+    M.histogram != null &&
+    M.histogram > 0
+  ) {
+    buy += 12;
+    buyReasons.push("MACD histogram bullish");
+  }
+
+  if (
+    M.histogram != null &&
+    M.histogram < 0
+  ) {
+    sell += 12;
+    sellReasons.push("MACD histogram bearish");
+  }
+
+  if (P.label === "STRONG BUYER") {
+    buy += 12;
+    buyReasons.push("Strong buyer pressure");
+  } else if (P.label === "BUYER") {
+    buy += 6;
+    buyReasons.push("Buyer pressure");
+  }
+
+  if (P.label === "STRONG SELLER") {
+    sell += 12;
+    sellReasons.push("Strong seller pressure");
+  } else if (P.label === "SELLER") {
+    sell += 6;
+    sellReasons.push("Seller pressure");
+  }
+
+  if (info.direction === "BUYER") {
+    buy += 7;
+    buyReasons.push("Previous closed candle was buyer");
+  }
+
+  if (info.direction === "SELLER") {
+    sell += 7;
+    sellReasons.push("Previous closed candle was seller");
+  }
+
+  if (info.pattern.includes("BULLISH")) {
+    buy += 5;
+    buyReasons.push(info.pattern);
+  }
+
+  if (info.pattern.includes("BEARISH")) {
+    sell += 5;
+    sellReasons.push(info.pattern);
+  }
+
+  if (
+    info.direction === "BUYER" &&
+    prev2Info.direction === "BUYER"
+  ) {
+    buy += 5;
+    buyReasons.push("Two consecutive buyer candles");
+  }
+
+  if (
+    info.direction === "SELLER" &&
+    prev2Info.direction === "SELLER"
+  ) {
+    sell += 5;
+    sellReasons.push("Two consecutive seller candles");
+  }
+
+  const momentum =
     A
-      ? (p.close-closed.at(-6).close)/A
+      ? (previous.close - closed.at(-6).close) / A
       : 0;
 
-  if(mom>.5)
-    add("buy",8,"Positive momentum");
+  if (momentum > 0.5) {
+    buy += 8;
+    buyReasons.push("Positive momentum");
+  }
 
-  if(mom<-.5)
-    add("sell",8,"Negative momentum");
+  if (momentum < -0.5) {
+    sell += 8;
+    sellReasons.push("Negative momentum");
+  }
 
-  const range=
-    (sr.resistance??0)-
-    (sr.support??0);
+  const range =
+    sr.resistance - sr.support;
 
-  if(range>0){
-    const ns=
-      (p.close-sr.support)/range<.12;
+  if (range > 0) {
+    const nearSupport =
+      (previous.close - sr.support) / range < 0.12;
 
-    const nr=
-      (sr.resistance-p.close)/range<.12;
+    const nearResistance =
+      (sr.resistance - previous.close) / range < 0.12;
 
-    if(ns&&ci.direction==="BUYER")
-      add(
-        "buy",
-        7,
+    if (
+      nearSupport &&
+      info.direction === "BUYER"
+    ) {
+      buy += 7;
+      buyReasons.push(
         "Buyer rejection near support"
       );
+    }
 
-    if(nr&&ci.direction==="SELLER")
-      add(
-        "sell",
-        7,
+    if (
+      nearResistance &&
+      info.direction === "SELLER"
+    ) {
+      sell += 7;
+      sellReasons.push(
         "Seller rejection near resistance"
       );
+    }
   }
 
-  return {
-    trend:T,
-    pressure:P,
-    support:sr.support,
-    resistance:sr.resistance,
+  const gap = Math.abs(buy - sell);
 
-    indicators:{
-      rsi:R,
-      ema9:e9,
-      ema21:e21,
-      ema50:e50,
-      macd:M.line,
-      macdSignal:M.signal,
-      macdHistogram:M.histogram,
-      atr:A,
-      momentum:mom
-    },
+  let signal = "WAIT";
+  let strength = "LOW";
 
-    previousCandle:{
-      ...p,
-      direction:ci.direction,
-      pattern:ci.pattern,
-      bodyRatio:ci.bodyRatio
-    },
-
-    previous2Candle:{
-      ...p2,
-      direction:c2.direction,
-      pattern:c2.pattern
-    },
-
-    buyScore:buy,
-    sellScore:sell,
-    confirmationGap:Math.abs(buy-sell),
-
-    buyReasons:br,
-    sellReasons:srn
-  };
-}
-
-function decide(a,mtf){
-  let buy=a.buyScore;
-  let sell=a.sellScore;
-
-  const br=[...a.buyReasons];
-  const sr=[...a.sellReasons];
-
-  const baseTrend=a.trend;
-
-  const mtfBuy=
-    mtf.filter(
-      x=>x.trend==="UPTREND"
-    ).length;
-
-  const mtfSell=
-    mtf.filter(
-      x=>x.trend==="DOWNTREND"
-    ).length;
-
-  if(mtfBuy>mtfSell){
-    buy+=10;
-    br.push(
-      "Higher-timeframe confirmation bullish"
-    );
-  }
-
-  if(mtfSell>mtfBuy){
-    sell+=10;
-    sr.push(
-      "Higher-timeframe confirmation bearish"
-    );
-  }
-
-  const gap=Math.abs(buy-sell);
-  const dom=buy>=sell?"BUY":"SELL";
-
-  let signal="WAIT";
-  let strength="LOW";
-
-  const candleBuyer=
-    a.previousCandle.direction==="BUYER";
-
-  const candleSeller=
-    a.previousCandle.direction==="SELLER";
-
-  // Strict 1M gate.
-  if(
-    baseTrend==="UPTREND"&&
-    buy>=76&&
-    gap>=28&&
-    candleBuyer&&
-    a.pressure.label!=="STRONG SELLER"&&
-    mtfBuy>=1
-  ){
-    signal=
-      buy>=92&&
-      gap>=42&&
-      a.pressure.label==="STRONG BUYER"&&
-      mtfBuy===mtf.length
+  if (
+    T === "UPTREND" &&
+    buy >= 68 &&
+    gap >= 24 &&
+    P.label !== "STRONG SELLER" &&
+    info.direction === "BUYER"
+  ) {
+    signal =
+      buy >= 86 &&
+      gap >= 38 &&
+      P.label === "STRONG BUYER"
         ? "STRONG BUY"
         : "BUY";
 
-    strength=
-      signal==="STRONG BUY"
+    strength =
+      signal === "STRONG BUY"
         ? "VERY HIGH"
         : "HIGH";
-
-  }else if(
-    baseTrend==="DOWNTREND"&&
-    sell>=76&&
-    gap>=28&&
-    candleSeller&&
-    a.pressure.label!=="STRONG BUYER"&&
-    mtfSell>=1
-  ){
-
-    signal=
-      sell>=92&&
-      gap>=42&&
-      a.pressure.label==="STRONG SELLER"&&
-      mtfSell===mtf.length
+  } else if (
+    T === "DOWNTREND" &&
+    sell >= 68 &&
+    gap >= 24 &&
+    P.label !== "STRONG BUYER" &&
+    info.direction === "SELLER"
+  ) {
+    signal =
+      sell >= 86 &&
+      gap >= 38 &&
+      P.label === "STRONG SELLER"
         ? "STRONG SELL"
         : "SELL";
 
-    strength=
-      signal==="STRONG SELL"
+    strength =
+      signal === "STRONG SELL"
         ? "VERY HIGH"
         : "HIGH";
-
-  }else if(
-    Math.max(buy,sell)>=58&&
-    gap>=14
-  ){
-    strength="MEDIUM";
+  } else if (
+    Math.max(buy, sell) >= 55 &&
+    gap >= 12
+  ) {
+    strength = "MEDIUM";
   }
 
+  const dominant =
+    buy >= sell ? "BUY" : "SELL";
+
+  const score = Math.round(
+    clamp(
+      50 + (buy - sell) * 0.55,
+      0,
+      100
+    )
+  );
+
   return {
+    ok: true,
     signal,
     strength,
-    buyScore:buy,
-    sellScore:sell,
-    confirmationGap:gap,
-    dominant:dom,
-    buyReasons:br,
-    sellReasons:sr,
-    mtfBuy,
-    mtfSell
+    score,
+    buyScore: buy,
+    sellScore: sell,
+    confirmationGap: gap,
+    dominant,
+
+    price: rnd(live.close, 8),
+    analyzedPrice: rnd(previous.close, 8),
+
+    trend: T,
+    pressure: P.label,
+    pressureScore: rnd(P.score, 3),
+
+    support: rnd(sr.support, 8),
+    resistance: rnd(sr.resistance, 8),
+
+    analyzedCandle:
+      "PREVIOUS CLOSED CANDLE",
+
+    targetCandle:
+      "NEXT CANDLE",
+
+    liveCandle: {
+      datetime: live.datetime,
+      open: rnd(live.open, 8),
+      high: rnd(live.high, 8),
+      low: rnd(live.low, 8),
+      close: rnd(live.close, 8)
+    },
+
+    previousCandle: {
+      datetime: previous.datetime,
+      open: rnd(previous.open, 8),
+      high: rnd(previous.high, 8),
+      low: rnd(previous.low, 8),
+      close: rnd(previous.close, 8),
+      direction: info.direction,
+      pattern: info.pattern,
+      bodyRatio: rnd(info.bodyRatio, 3)
+    },
+
+    indicators: {
+      rsi: rnd(R, 2),
+      ema9: rnd(e9, 8),
+      ema21: rnd(e21, 8),
+      ema50: rnd(e50, 8),
+      macd: rnd(M.line, 10),
+      macdSignal: rnd(M.signal, 10),
+      macdHistogram: rnd(M.histogram, 10),
+      atr: rnd(A, 10),
+      momentum: rnd(momentum, 2)
+    },
+
+    confirmations: {
+      buy: buyReasons,
+      sell: sellReasons
+    },
+
+    candleCount: candles.length,
+    closedCandleCount: closed.length,
+
+    warning:
+      "Indicator-based analysis only. " +
+      "Strength is not win probability and " +
+      "no signal guarantees profit."
   };
 }
 
-function intervalForSymbol(i){
-  return i;
-}
-
-async function fetchTD(
-  env,
-  symbol,
-  interval,
-  outputsize
-){
-  const u=
-    "https://api.twelvedata.com/time_series"+
-    "?apikey="+
-    encodeURIComponent(
-      env.TWELVE_DATA_API_KEY
-    )+
-    "&symbol="+
-    encodeURIComponent(symbol)+
-    "&interval="+
-    encodeURIComponent(
-      intervalForSymbol(interval)
-    )+
-    "&outputsize="+
-    outputsize+
-    "&format=JSON";
-
-  const r=await fetch(u);
-
-  let d={};
-
-  try{
-    d=await r.json();
-  }catch{}
-
-  if(!r.ok||d.status==="error"){
-    const e=new Error(
-      d.message||
-      `Twelve Data HTTP ${r.status}`
-    );
-
-    e.code=d.code||r.status;
-
-    throw e;
-  }
-
-  return normalize(d.values);
-}
-
-function normalize(values){
-  if(!Array.isArray(values))
-    return [];
-
-  return values
-    .map(x=>({
-      datetime:x.datetime,
-      open:n(x.open),
-      high:n(x.high),
-      low:n(x.low),
-      close:n(x.close),
-      volume:n(x.volume)||0
-    }))
-    .filter(
-      x=>
-        x.open!=null&&
-        x.high!=null&&
-        x.low!=null&&
-        x.close!=null
-    )
-    .sort(
-      (a,b)=>
-        new Date(a.datetime)-
-        new Date(b.datetime)
-    );
-}
-
-async function market(request,env){
-
-  if(!env.TWELVE_DATA_API_KEY){
-    return json({
-      ok:false,
-      error:
-        "TWELVE_DATA_API_KEY is missing in Cloudflare."
-    },500);
-  }
-
-  let b={};
-
-  try{
-    b=await request.json();
-  }catch{
-    return json({
-      ok:false,
-      error:"Invalid JSON body."
-    },400);
-  }
-
-  const symbol=
-    normalizeSymbol(b.symbol);
-
-  const interval=
-    String(
-      b.interval||
-      DEFAULT_INTERVAL
-    ).trim();
-
-  const mode=
-    String(
-      b.mode||
-      "REAL"
-    ).toUpperCase();
-
-  const outputsize=
-    clamp(
-      Number(b.outputsize)||120,
-      70,
+async function getMarketData(request, env) {
+  if (!env.TWELVE_DATA_API_KEY) {
+    return json(
+      {
+        ok: false,
+        source: "Cloudflare",
+        error:
+          "TWELVE_DATA_API_KEY secret is missing."
+      },
       500
     );
-
-  if(mode==="OTC"){
-    return json({
-      ok:false,
-      signal:"WAIT",
-      mode:"OTC",
-      error:
-        "Verified Quotex OTC feed is not connected. No fake OTC signal will be generated."
-    },503);
   }
 
-  if(!ALLOWED.has(interval)){
-    return json({
-      ok:false,
-      error:
-        `Unsupported interval: ${interval}`
-    },400);
+  let body;
+
+  try {
+    body = await request.json();
+  } catch {
+    return json(
+      {
+        ok: false,
+        source: "Cloudflare",
+        error: "Invalid JSON body."
+      },
+      400
+    );
   }
 
-  try{
+  const symbol =
+    normalizeSymbol(body.symbol);
 
-    const raw=
-      await fetchTD(
-        env,
-        symbol,
-        interval,
-        outputsize
-      );
+  const interval =
+    String(
+      body.interval || "1min"
+    ).trim();
 
-    if(raw.length<62){
-      return json({
-        ok:false,
+  const mode =
+    String(
+      body.mode || "REAL"
+    ).toUpperCase();
+
+  const outputsize = clamp(
+    Number(body.outputsize) || 120,
+    70,
+    500
+  );
+
+  if (mode === "OTC") {
+    return json(
+      {
+        ok: false,
+        signal: "WAIT",
+        mode: "OTC",
         error:
-          `Only ${raw.length} valid candles returned; at least 62 are required.`
-      },502);
-    }
+          "Verified Quotex OTC feed is not connected. " +
+          "No fake OTC signal will be generated."
+      },
+      503
+    );
+  }
 
-    // Never use newest provider candle
-    // as the closed candle.
-    const live=raw.at(-1);
-    const closed=raw.slice(0,-1);
+  if (!INTERVALS.has(interval)) {
+    return json(
+      {
+        ok: false,
+        source: "Cloudflare",
+        error:
+          `Unsupported interval: ${interval}`
+      },
+      400
+    );
+  }
 
-    const base=
-      analyzeClosed(closed);
+  // Twelve Data recommends the Authorization header
+  // for API-key authentication.
+  const url =
+    "https://api.twelvedata.com/time_series" +
+    "?symbol=" +
+    encodeURIComponent(symbol) +
+    "&interval=" +
+    encodeURIComponent(interval) +
+    "&outputsize=" +
+    outputsize +
+    "&format=JSON";
 
-    // MTF confirmation.
-    const mtfIntervals=
-      MTF[interval]||[];
-
-    const mtf=[];
-
-    for(const tf of mtfIntervals){
-
-      const d=
-        await fetchTD(
-          env,
-          symbol,
-          tf,
-          100
-        );
-
-      if(d.length<62){
-        throw new Error(
-          `Not enough ${tf} candles for MTF confirmation.`
-        );
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Authorization":
+          `apikey ${env.TWELVE_DATA_API_KEY}`,
+        "Accept": "application/json"
       }
-
-      mtf.push({
-        interval:tf,
-        ...analyzeClosed(
-          d.slice(0,-1)
-        )
-      });
-    }
-
-    const decision=
-      decide(base,mtf);
-
-    return json({
-
-      ok:true,
-
-      app:APP,
-
-      version:VERSION,
-
-      source:"Twelve Data",
-
-      mode:"REAL",
-
-      symbol,
-
-      interval,
-
-      livePrice:
-        rnd(live.close,8),
-
-      liveCandle:{
-        datetime:live.datetime,
-        open:rnd(live.open,8),
-        high:rnd(live.high,8),
-        low:rnd(live.low,8),
-        close:rnd(live.close,8)
-      },
-
-      analyzedCandle:
-        "PREVIOUS CLOSED CANDLE",
-
-      targetCandle:
-        "NEXT CANDLE",
-
-      analyzedPrice:
-        rnd(
-          base.previousCandle.close,
-          8
-        ),
-
-      signal:
-        decision.signal,
-
-      strength:
-        decision.strength,
-
-      score:
-        Math.round(
-          clamp(
-            50+
-            (decision.buyScore-
-             decision.sellScore)*.55,
-            0,
-            100
-          )
-        ),
-
-      buyScore:
-        decision.buyScore,
-
-      sellScore:
-        decision.sellScore,
-
-      confirmationGap:
-        decision.confirmationGap,
-
-      dominant:
-        decision.dominant,
-
-      trend:
-        base.trend,
-
-      pressure:
-        base.pressure.label,
-
-      pressureScore:
-        rnd(
-          base.pressure.score,
-          3
-        ),
-
-      support:
-        rnd(base.support,8),
-
-      resistance:
-        rnd(base.resistance,8),
-
-      previousCandle:{
-        datetime:
-          base.previousCandle.datetime,
-
-        open:
-          rnd(
-            base.previousCandle.open,
-            8
-          ),
-
-        high:
-          rnd(
-            base.previousCandle.high,
-            8
-          ),
-
-        low:
-          rnd(
-            base.previousCandle.low,
-            8
-          ),
-
-        close:
-          rnd(
-            base.previousCandle.close,
-            8
-          ),
-
-        direction:
-          base.previousCandle.direction,
-
-        pattern:
-          base.previousCandle.pattern,
-
-        bodyRatio:
-          rnd(
-            base.previousCandle.bodyRatio,
-            3
-          )
-      },
-
-      indicators:
-        Object.fromEntries(
-          Object.entries(
-            base.indicators
-          ).map(
-            ([k,v])=>[
-              k,
-              rnd(
-                v,
-                k==="rsi"||
-                k==="momentum"
-                  ? 2
-                  : 10
-              )
-            ]
-          )
-        ),
-
-      mtf:
-        mtf.map(x=>({
-          interval:x.interval,
-          trend:x.trend,
-          pressure:x.pressure.label,
-          rsi:rnd(
-            x.indicators.rsi,
-            2
-          )
-        })),
-
-      confirmations:{
-        buy:
-          decision.buyReasons,
-
-        sell:
-          decision.sellReasons
-      },
-
-      candleCount:
-        raw.length,
-
-      closedCandleCount:
-        closed.length,
-
-      warning:
-        "Indicator strength is not win probability. No signal guarantees profit."
     });
 
-  }catch(e){
+    const rawText = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      return json(
+        {
+          ok: false,
+          source: "Twelve Data",
+          error:
+            "Twelve Data returned non-JSON data.",
+          httpStatus: response.status
+        },
+        502
+      );
+    }
+
+    if (
+      !response.ok ||
+      data.status === "error"
+    ) {
+      return json(
+        {
+          ok: false,
+          source: "Twelve Data",
+          httpStatus: response.status,
+          code:
+            data.code ||
+            response.status,
+          error:
+            data.message ||
+            "Twelve Data request failed."
+        },
+        response.status >= 400
+          ? response.status
+          : 502
+      );
+    }
+
+    const candles =
+      normalizeCandles(data.values);
+
+    if (candles.length < 61) {
+      return json(
+        {
+          ok: false,
+          source: "Twelve Data",
+          error:
+            `Only ${candles.length} valid candles returned; ` +
+            `at least 61 are required.`,
+          symbol,
+          interval
+        },
+        502
+      );
+    }
+
+    const analysis =
+      analyze(candles);
+
+    if (!analysis.ok) {
+      return json(
+        {
+          ok: false,
+          source: "Analysis Engine",
+          error: analysis.error
+        },
+        502
+      );
+    }
 
     return json({
-      ok:false,
-      signal:"WAIT",
-      error:
-        "Market analysis failed.",
-      details:
-        e?.message||
-        "Unknown error",
-      code:
-        e?.code||
-        null
-    },502);
+      ok: true,
+      app: APP,
+      version: VERSION,
+      source: "Twelve Data",
+      mode: "REAL",
+      symbol,
+      interval,
+
+      timezone:
+        data.meta?.exchange_timezone ||
+        data.meta?.timezone ||
+        null,
+
+      exchange:
+        data.meta?.exchange ||
+        null,
+
+      analysis,
+
+      livePrice:
+        analysis.price,
+
+      closedCandleCount:
+        analysis.closedCandleCount,
+
+      provider:
+        "Twelve Data",
+
+      candles:
+        candles.slice(-120)
+    });
+  } catch (e) {
+    return json(
+      {
+        ok: false,
+        source: "Cloudflare",
+        error:
+          "Market request failed.",
+        details:
+          e?.message ||
+          "Unknown network error"
+      },
+      502
+    );
   }
 }
 
 export default {
-
-  async fetch(request,env){
-
-    if(request.method==="OPTIONS"){
-      return new Response(
-        null,
-        {
-          status:204,
-          headers:CORS
-        }
-      );
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: CORS
+      });
     }
 
-    const u=
+    const url =
       new URL(request.url);
 
-    if(
-      request.method==="GET"&&
-      u.pathname==="/"
-    ){
+    // Health check
+    if (
+      request.method === "GET" &&
+      url.pathname === "/"
+    ) {
       return json({
-
-        ok:true,
-
-        app:APP,
-
-        version:VERSION,
-
-        worker:"online",
-
-        provider:"Twelve Data",
-
-        primaryTimeframe:"1min",
-
-        features:[
-          "closed-candle analysis",
-          "EMA",
-          "RSI",
-          "MACD",
-          "ATR",
-          "momentum",
-          "buyer/seller pressure",
-          "swing support/resistance",
-          "MTF confirmation",
-          "strict WAIT gate"
-        ],
-
-        endpoints:{
-          health:"GET /",
-          debug:"GET /debug",
-          market:"POST /market"
+        ok: true,
+        app: APP,
+        worker: "online",
+        version: VERSION,
+        provider: "Twelve Data",
+        endpoints: {
+          health: "GET /",
+          debug: "GET /debug",
+          market: "POST /market"
         },
-
         note:
-          "Real market only. Quotex OTC is blocked until a verified OTC feed is connected."
+          "Real market only. OTC is blocked " +
+          "until a verified OTC feed exists."
       });
     }
 
-    if(
-      request.method==="GET"&&
-      u.pathname==="/debug"
-    ){
+    // Safe configuration check.
+    // Never returns the actual secret.
+    if (
+      request.method === "GET" &&
+      url.pathname === "/debug"
+    ) {
       return json({
-
-        ok:true,
-
-        app:APP,
-
-        version:VERSION,
-
-        provider:"Twelve Data",
-
+        ok: true,
+        app: APP,
+        version: VERSION,
+        provider: "Twelve Data",
         twelveDataApiKeyConfigured:
-          Boolean(
-            env.TWELVE_DATA_API_KEY
-          )
+          Boolean(env.TWELVE_DATA_API_KEY)
       });
     }
 
-    if(
-      request.method==="POST"&&
-      u.pathname==="/market"
-    ){
-      return market(
+    if (
+      request.method === "POST" &&
+      url.pathname === "/market"
+    ) {
+      return getMarketData(
         request,
         env
       );
     }
 
-    if(
-      request.method==="POST"&&
-      u.pathname==="/chat"
-    ){
-      return json({
-        ok:false,
-        available:false,
-        message:
-          "AI chat is not enabled because no paid AI API is configured. Local rule-based market analysis remains available."
-      },503);
+    if (
+      request.method === "POST" &&
+      url.pathname === "/chat"
+    ) {
+      return json(
+        {
+          ok: false,
+          available: false,
+          message:
+            "AI chat is disabled. " +
+            "Market analysis works without a paid AI API."
+        },
+        503
+      );
     }
 
-    return json({
-      ok:false,
-      error:"Endpoint not found."
-    },404);
+    return json(
+      {
+        ok: false,
+        error: "Endpoint not found."
+      },
+      404
+    );
   }
 };
