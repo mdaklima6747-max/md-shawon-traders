@@ -1,803 +1,664 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#07111f">
-  <title>MD Shawon Traders</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MD Shawon Traders</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
 
-    body {
-      margin: 0;
-      background: #07111f;
-      color: #eaf4ff;
-      font-family: Arial, sans-serif;
-    }
+html,body{
+  margin:0;
+  padding:0;
+  background:#07111f;
+  color:#eaf7ff;
+  font-family:Arial,Helvetica,sans-serif;
+}
 
-    .app {
-      width: 100%;
-      max-width: 650px;
-      margin: auto;
-      padding: 14px;
-    }
+body{
+  min-height:100vh;
+}
 
-    header {
-      padding: 16px 4px 12px;
-    }
+button,select{
+  font:inherit;
+}
 
-    .brand {
-      font-size: 25px;
-      font-weight: 800;
-      color: #22d3ee;
-    }
+button{
+  cursor:pointer;
+}
 
-    .sub {
-      margin-top: 5px;
-      color: #91a4b8;
-      font-size: 13px;
-    }
+.app{
+  width:100%;
+  max-width:650px;
+  margin:auto;
+  padding:14px;
+}
 
-    .card {
-      background: #0d1a2b;
-      border: 1px solid #19304a;
-      border-radius: 18px;
-      padding: 15px;
-      margin-bottom: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,.18);
-    }
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 2px 18px;
+}
 
-    .label {
-      color: #91a4b8;
-      font-size: 12px;
-      margin-bottom: 7px;
-    }
+.brand{
+  flex:1;
+}
 
-    select,
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 12px;
-      padding: 13px;
-      font-size: 15px;
-    }
+.brand h1{
+  margin:0;
+  font-size:25px;
+  color:#00e5ff;
+  letter-spacing:.3px;
+}
 
-    select {
-      background: #081522;
-      color: #fff;
-      border: 1px solid #213c58;
-      outline: none;
-    }
+.brand p{
+  margin:5px 0 0;
+  color:#91a7b8;
+  font-size:12px;
+}
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
+.menu{
+  width:44px;
+  height:44px;
+  border:1px solid #17324a;
+  border-radius:13px;
+  background:#0b1a2b;
+  color:#fff;
+  font-size:23px;
+}
 
-    .auto {
-      margin-top: 13px;
-      background: linear-gradient(135deg,#16a34a,#22c55e);
-      color: white;
-      font-weight: 800;
-      font-size: 17px;
-      box-shadow: 0 8px 25px rgba(34,197,94,.2);
-    }
+.card{
+  background:#0b1929;
+  border:1px solid #17324a;
+  border-radius:18px;
+  padding:15px;
+  margin-bottom:13px;
+  box-shadow:0 8px 25px rgba(0,0,0,.18);
+}
 
-    .auto:disabled {
-      opacity: .65;
-    }
+.label{
+  font-size:11px;
+  color:#7992a6;
+  margin-bottom:8px;
+  letter-spacing:.8px;
+  font-weight:bold;
+}
 
-    .signalBox {
-      text-align: center;
-      padding: 22px 12px;
-    }
+.row{
+  display:flex;
+  gap:8px;
+}
 
-    .signalTitle {
-      color: #91a4b8;
-      font-size: 12px;
-      letter-spacing: 1px;
-    }
+.mode{
+  flex:1;
+  border:1px solid #21435b;
+  background:#0d2134;
+  color:#a9bfce;
+  padding:12px 8px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:bold;
+}
 
-    .signal {
-      font-size: 42px;
-      font-weight: 900;
-      margin: 8px 0;
-    }
+.mode.active{
+  background:#073d4c;
+  border-color:#00e5ff;
+  color:#00e5ff;
+}
 
-    .wait {
-      color: #facc15;
-    }
+select{
+  width:100%;
+  border:1px solid #21435b;
+  background:#0d2134;
+  color:#eaf7ff;
+  padding:13px;
+  border-radius:12px;
+  outline:none;
+}
 
-    .buy {
-      color: #22c55e;
-    }
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
 
-    .sell {
-      color: #ef4444;
-    }
+.tf{
+  border:1px solid #21435b;
+  background:#0d2134;
+  color:#a9bfce;
+  padding:11px 5px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:bold;
+}
 
-    .strength {
-      font-size: 14px;
-      color: #b9c7d6;
-    }
+.tf.active{
+  background:#073d4c;
+  border-color:#00e5ff;
+  color:#00e5ff;
+}
 
-    .score {
-      margin-top: 12px;
-      font-size: 13px;
-      color: #8ee9ff;
-    }
+.auto{
+  width:100%;
+  min-height:62px;
+  border:0;
+  border-radius:17px;
+  color:#001018;
+  background:linear-gradient(135deg,#00e5ff,#00ff9d);
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:.8px;
+  box-shadow:0 10px 30px rgba(0,229,255,.16);
+}
 
-    .status {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #9fb0c3;
-      min-height: 18px;
-      line-height: 1.5;
-    }
+.auto:active{
+  transform:scale(.98);
+}
 
-    .targetBox {
-      margin-top: 12px;
-      background: #081522;
-      border: 1px solid #1b3852;
-      border-radius: 13px;
-      padding: 12px;
-    }
+.auto.loading{
+  opacity:.7;
+}
 
-    .targetTitle {
-      color: #8195aa;
-      font-size: 11px;
-    }
+.signal{
+  text-align:center;
+  padding:22px 15px;
+}
 
-    .targetValue {
-      margin-top: 5px;
-      font-weight: 800;
-      font-size: 14px;
-      color: #eaf4ff;
-    }
+.signalTitle{
+  color:#7f98aa;
+  font-size:11px;
+  font-weight:bold;
+  letter-spacing:1px;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+.signalValue{
+  margin:8px 0;
+  font-size:40px;
+  font-weight:900;
+}
 
-    .metric {
-      background: #081522;
-      border: 1px solid #172d44;
-      border-radius: 12px;
-      padding: 11px;
-    }
+.signal.wait .signalValue{
+  color:#ffd166;
+}
 
-    .metricName {
-      color: #8195aa;
-      font-size: 11px;
-    }
+.signal.buy .signalValue,
+.signal.strongbuy .signalValue{
+  color:#00ff9d;
+}
 
-    .metricValue {
-      margin-top: 5px;
-      font-size: 15px;
-      font-weight: 700;
-      word-break: break-word;
-    }
+.signal.sell .signalValue,
+.signal.strongsell .signalValue{
+  color:#ff5577;
+}
 
-    .sectionTitle {
-      font-size: 16px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
+.signalMessage{
+  color:#9bb0bf;
+  font-size:13px;
+}
 
-    .scoreGrid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
+.score{
+  margin-top:14px;
+  color:#91a7b8;
+  font-size:12px;
+}
 
-    .scoreCard {
-      background: #081522;
-      border: 1px solid #172d44;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-    }
+.error{
+  margin-top:12px;
+  padding:11px;
+  border-radius:10px;
+  background:#341421;
+  color:#ff8fa6;
+  font-size:12px;
+  word-break:break-word;
+}
 
-    .scoreCard .small {
-      color: #8195aa;
-      font-size: 11px;
-    }
+.metrics{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
 
-    .scoreCard .big {
-      font-size: 22px;
-      font-weight: 900;
-      margin-top: 5px;
-    }
+.metric{
+  background:#091625;
+  border:1px solid #152d42;
+  border-radius:12px;
+  padding:11px;
+}
 
-    .buyBig {
-      color: #22c55e;
-    }
+.metricName{
+  color:#71889b;
+  font-size:10px;
+  margin-bottom:5px;
+}
 
-    .sellBig {
-      color: #ef4444;
-    }
+.metricValue{
+  color:#edf9ff;
+  font-size:14px;
+  font-weight:bold;
+  word-break:break-word;
+}
 
-    .confirm {
-      padding: 8px 10px;
-      border-radius: 10px;
-      margin-bottom: 7px;
-      font-size: 12px;
-      background: #101f31;
-      border: 1px solid #1d3853;
-      line-height: 1.4;
-    }
+.sectionTitle{
+  margin:0 0 12px;
+  font-size:15px;
+  color:#dff8ff;
+}
 
-    .buyConfirm {
-      border-color: #166534;
-    }
+.reason{
+  margin:7px 0;
+  padding:9px 10px;
+  border-radius:10px;
+  background:#091625;
+  border:1px solid #152d42;
+  color:#b8cbd7;
+  font-size:12px;
+  line-height:1.45;
+}
 
-    .sellConfirm {
-      border-color: #7f1d1d;
-    }
+.scoreBox{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
 
-    .warning {
-      color: #fbbf24;
-      font-size: 11px;
-      line-height: 1.5;
-      margin-top: 10px;
-    }
+.scoreItem{
+  padding:14px;
+  border-radius:12px;
+  background:#091625;
+  border:1px solid #152d42;
+  text-align:center;
+}
 
-    .candleBox {
-      background: #081522;
-      border: 1px solid #1d3853;
-      border-radius: 14px;
-      padding: 13px;
-    }
+.scoreLabel{
+  color:#71889b;
+  font-size:10px;
+}
 
-    .candleMain {
-      font-size: 19px;
-      font-weight: 900;
-      margin-bottom: 5px;
-    }
+.scoreNumber{
+  margin-top:5px;
+  font-size:23px;
+  font-weight:900;
+}
 
-    .candleSub {
-      color: #91a4b8;
-      font-size: 12px;
-    }
+.buy{
+  color:#00ff9d;
+}
 
-    .floatingPreview {
-      margin-top: 10px;
-      background: #081522;
-      border: 1px dashed #27506f;
-      border-radius: 14px;
-      padding: 13px;
-    }
+.sell{
+  color:#ff5577;
+}
 
-    .floatingButton {
-      width: 58px;
-      height: 58px;
-      padding: 0;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#06b6d4,#2563eb);
-      color: white;
-      font-weight: 900;
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
+.mtf{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
 
-    .chatInput {
-      display: flex;
-      gap: 8px;
-    }
+.mtfItem{
+  background:#091625;
+  border:1px solid #152d42;
+  border-radius:11px;
+  padding:11px;
+}
 
-    .chatInput input {
-      flex: 1;
-      min-width: 0;
-      background: #081522;
-      color: white;
-      border: 1px solid #213c58;
-      border-radius: 12px;
-      padding: 12px;
-      outline: none;
-    }
+.mtfTf{
+  color:#70899b;
+  font-size:10px;
+}
 
-    .chatInput button {
-      width: 95px;
-      background: #155e75;
-      color: white;
-      font-weight: 700;
-    }
+.mtfTrend{
+  margin-top:5px;
+  font-size:13px;
+  font-weight:bold;
+}
 
-    .chatAnswer {
-      margin-top: 10px;
-      color: #c9d7e5;
-      font-size: 13px;
-      line-height: 1.6;
-    }
+.footer{
+  text-align:center;
+  color:#526b7e;
+  font-size:10px;
+  padding:12px 5px 25px;
+  line-height:1.6;
+}
 
-    .footer {
-      text-align: center;
-      color: #60758a;
-      font-size: 11px;
-      padding: 12px;
-    }
-  </style>
+.floating{
+  position:fixed;
+  right:16px;
+  bottom:18px;
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  border:1px solid #00e5ff;
+  background:#071c2b;
+  color:#00e5ff;
+  font-weight:900;
+  box-shadow:0 8px 25px rgba(0,0,0,.35);
+}
+
+.hidden{
+  display:none!important;
+}
+
+@media(max-width:360px){
+  .app{
+    padding:10px;
+  }
+
+  .brand h1{
+    font-size:22px;
+  }
+
+  .signalValue{
+    font-size:34px;
+  }
+}
+</style>
 </head>
 
 <body>
 
 <div class="app">
 
-  <header>
-    <div class="brand">MD Shawon Traders</div>
-    <div class="sub">AI Market Analysis • Quotex Companion</div>
+  <header class="header">
+    <div class="brand">
+      <h1>MD Shawon Traders</h1>
+      <p>AI Market Analysis • Quotex Companion</p>
+    </div>
+
+    <button class="menu" id="menuBtn">☰</button>
   </header>
 
 
-  <!-- CONTROL -->
-
+  <!-- MARKET MODE -->
   <div class="card">
 
+    <div class="label">MARKET MODE</div>
+
     <div class="row">
+      <button class="mode active" id="realBtn">
+        REAL MARKET
+      </button>
 
-      <div>
-        <div class="label">MARKET MODE</div>
+      <button class="mode" id="otcBtn">
+        QUOTEX OTC
+      </button>
+    </div>
 
-        <select id="mode">
-          <option value="REAL">REAL MARKET</option>
-          <option value="OTC">QUOTEX OTC</option>
-        </select>
-      </div>
+  </div>
 
 
-      <div>
-        <div class="label">TIMEFRAME</div>
+  <!-- TIMEFRAME -->
+  <div class="card">
 
-        <select id="interval">
-          <option value="1min">1 MIN</option>
-          <option value="5min">5 MIN</option>
-          <option value="15min">15 MIN</option>
-          <option value="1h">1 HOUR</option>
-        </select>
-      </div>
+    <div class="label">TIMEFRAME</div>
+
+    <div class="grid2">
+
+      <button class="tf active" data-tf="1min">
+        1 MIN
+      </button>
+
+      <button class="tf" data-tf="5min">
+        5 MIN
+      </button>
+
+      <button class="tf" data-tf="15min">
+        15 MIN
+      </button>
+
+      <button class="tf" data-tf="1h">
+        1 HOUR
+      </button>
 
     </div>
 
-
-    <div style="margin-top:12px">
-
-      <div class="label">
-        ASSET / PAIR
-      </div>
-
-      <select id="symbol">
-
-        <optgroup label="Forex">
-
-          <option>EUR/USD</option>
-          <option>GBP/USD</option>
-          <option>USD/JPY</option>
-          <option>USD/CHF</option>
-          <option>USD/CAD</option>
-          <option>AUD/USD</option>
-          <option>NZD/USD</option>
-
-          <option>EUR/GBP</option>
-          <option>EUR/JPY</option>
-          <option>EUR/CHF</option>
-
-          <option>GBP/JPY</option>
-          <option>GBP/CHF</option>
-          <option>GBP/AUD</option>
-          <option>GBP/CAD</option>
-
-          <option>AUD/JPY</option>
-          <option>AUD/CAD</option>
-          <option>AUD/CHF</option>
-
-          <option>CAD/JPY</option>
-          <option>CAD/CHF</option>
-
-          <option>CHF/JPY</option>
-          <option>NZD/JPY</option>
-
-        </optgroup>
+  </div>
 
 
-        <optgroup label="Metals">
+  <!-- ASSET -->
+  <div class="card">
 
-          <option>XAU/USD</option>
-          <option>XAG/USD</option>
+    <div class="label">ASSET / PAIR</div>
 
-        </optgroup>
+    <select id="symbol">
+
+      <optgroup label="FOREX">
+
+        <option>EUR/USD</option>
+        <option>GBP/USD</option>
+        <option>USD/JPY</option>
+        <option>USD/CHF</option>
+        <option>USD/CAD</option>
+        <option>AUD/USD</option>
+        <option>NZD/USD</option>
+
+        <option>EUR/GBP</option>
+        <option>EUR/JPY</option>
+        <option>EUR/CHF</option>
+
+        <option>GBP/JPY</option>
+        <option>GBP/CHF</option>
+        <option>GBP/AUD</option>
+        <option>GBP/CAD</option>
+
+        <option>AUD/JPY</option>
+        <option>AUD/CAD</option>
+        <option>AUD/CHF</option>
+
+        <option>CAD/JPY</option>
+        <option>CAD/CHF</option>
+        <option>CHF/JPY</option>
+
+        <option>NZD/JPY</option>
+
+      </optgroup>
 
 
-        <optgroup label="Crypto">
+      <optgroup label="METALS">
 
-          <option>BTC/USD</option>
-          <option>ETH/USD</option>
-          <option>LTC/USD</option>
-          <option>XRP/USD</option>
+        <option>XAU/USD</option>
+        <option>XAG/USD</option>
 
-        </optgroup>
+      </optgroup>
 
 
-        <optgroup label="Indices">
+      <optgroup label="CRYPTO">
 
-          <option>US30</option>
-          <option>NAS100</option>
-          <option>SPX500</option>
-          <option>GER30</option>
-          <option>UK100</option>
-          <option>JPN225</option>
+        <option>BTC/USD</option>
+        <option>ETH/USD</option>
+        <option>LTC/USD</option>
+        <option>XRP/USD</option>
 
-        </optgroup>
-
-      </select>
-
-    </div>
+      </optgroup>
 
 
-    <button
-      id="analyzeButton"
-      class="auto"
-      onclick="analyze()">
+      <optgroup label="INDICES">
 
+        <option>US30</option>
+        <option>NAS100</option>
+        <option>SPX500</option>
+        <option>GER30</option>
+        <option>UK100</option>
+        <option>JPN225</option>
+
+      </optgroup>
+
+    </select>
+
+  </div>
+
+
+  <!-- AUTO -->
+  <div class="card">
+
+    <button class="auto" id="autoBtn">
       ⚡ AUTO ANALYZE
-
     </button>
 
   </div>
 
 
   <!-- SIGNAL -->
-
-  <div class="card signalBox">
+  <div class="card signal wait" id="signalCard">
 
     <div class="signalTitle">
       CURRENT SIGNAL
     </div>
 
-
-    <div
-      id="signal"
-      class="signal wait">
-
+    <div class="signalValue" id="signal">
       WAIT
-
     </div>
 
-
-    <div
-      id="strength"
-      class="strength">
-
-      Waiting for analysis
-
+    <div class="signalMessage" id="signalMessage">
+      Ready for analysis
     </div>
 
-
-    <div
-      id="score"
-      class="score">
-
-      Confirmation Score: —
-
+    <div class="score">
+      Confirmation Score:
+      <strong id="strength">—</strong>
     </div>
 
+    <div id="errorBox" class="error hidden"></div>
 
-    <div
-      id="status"
-      class="status">
-
-      Ready
-
-    </div>
+  </div>
 
 
-    <div class="targetBox">
+  <!-- ANALYSIS TARGET -->
+  <div class="card">
 
-      <div class="targetTitle">
-        ANALYSIS TARGET
+    <h3 class="sectionTitle">
+      ANALYSIS TARGET
+    </h3>
+
+    <div class="metric">
+      <div class="metricName">
+        MODE
       </div>
 
-      <div
-        id="target"
-        class="targetValue">
+      <div class="metricValue" id="targetMode">
+        REAL MARKET
+      </div>
+    </div>
 
-        Previous Closed Candle → Next Candle
+    <br>
 
+    <div class="metric">
+      <div class="metricName">
+        SYMBOL
       </div>
 
+      <div class="metricValue" id="targetSymbol">
+        EUR/USD
+      </div>
+    </div>
+
+    <br>
+
+    <div class="metric">
+      <div class="metricName">
+        TIMEFRAME
+      </div>
+
+      <div class="metricValue" id="targetTf">
+        1 MIN
+      </div>
     </div>
 
   </div>
 
 
   <!-- MARKET ANALYSIS -->
-
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       Market Analysis
-    </div>
+    </h3>
 
-
-    <div class="grid">
-
+    <div class="metrics">
 
       <div class="metric">
-
-        <div class="metricName">
-          LIVE PRICE
-        </div>
-
-        <div
-          id="price"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">LIVE PRICE</div>
+        <div class="metricValue" id="livePrice">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          TREND
-        </div>
-
-        <div
-          id="trend"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">TREND</div>
+        <div class="metricValue" id="trend">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          RSI
-        </div>
-
-        <div
-          id="rsi"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">RSI</div>
+        <div class="metricValue" id="rsi">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          MOMENTUM
-        </div>
-
-        <div
-          id="momentum"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">MOMENTUM</div>
+        <div class="metricValue" id="momentum">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          EMA 9
-        </div>
-
-        <div
-          id="ema9"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">EMA 9</div>
+        <div class="metricValue" id="ema9">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          EMA 21
-        </div>
-
-        <div
-          id="ema21"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">EMA 21</div>
+        <div class="metricValue" id="ema21">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          EMA 50
-        </div>
-
-        <div
-          id="ema50"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">EMA 50</div>
+        <div class="metricValue" id="ema50">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          MACD
-        </div>
-
-        <div
-          id="macd"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">MACD</div>
+        <div class="metricValue" id="macd">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          ATR
-        </div>
-
-        <div
-          id="atr"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">ATR</div>
+        <div class="metricValue" id="atr">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          PRESSURE
-        </div>
-
-        <div
-          id="pressure"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">PRESSURE</div>
+        <div class="metricValue" id="pressure">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          SUPPORT
-        </div>
-
-        <div
-          id="support"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">SUPPORT</div>
+        <div class="metricValue" id="support">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          RESISTANCE
-        </div>
-
-        <div
-          id="resistance"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">RESISTANCE</div>
+        <div class="metricValue" id="resistance">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          CANDLE PATTERN
-        </div>
-
-        <div
-          id="pattern"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">CANDLE PATTERN</div>
+        <div class="metricValue" id="pattern">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          PREVIOUS CANDLE
-        </div>
-
-        <div
-          id="previousCandle"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">PREVIOUS CANDLE</div>
+        <div class="metricValue" id="previousCandle">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          CANDLE STRENGTH
-        </div>
-
-        <div
-          id="previousStrength"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">CANDLE STRENGTH</div>
+        <div class="metricValue" id="candleStrength">—</div>
       </div>
 
-
       <div class="metric">
-
-        <div class="metricName">
-          CLOSED CANDLES
-        </div>
-
-        <div
-          id="closedCandles"
-          class="metricValue">
-
-          —
-
-        </div>
-
+        <div class="metricName">CLOSED CANDLES</div>
+        <div class="metricValue" id="closedCandles">—</div>
       </div>
 
     </div>
@@ -805,59 +666,64 @@
   </div>
 
 
-  <!-- SCORE -->
-
+  <!-- SCORES -->
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       Signal Scores
-    </div>
+    </h3>
 
+    <div class="scoreBox">
 
-    <div class="scoreGrid">
-
-
-      <div class="scoreCard">
-
-        <div class="small">
+      <div class="scoreItem">
+        <div class="scoreLabel">
           BUY SCORE
         </div>
 
-        <div
-          id="buyScore"
-          class="big buyBig">
-
+        <div class="scoreNumber buy" id="buyScore">
           —
-
         </div>
-
       </div>
 
 
-      <div class="scoreCard">
-
-        <div class="small">
+      <div class="scoreItem">
+        <div class="scoreLabel">
           SELL SCORE
         </div>
 
-        <div
-          id="sellScore"
-          class="big sellBig">
-
+        <div class="scoreNumber sell" id="sellScore">
           —
-
         </div>
-
       </div>
 
     </div>
 
+  </div>
 
-    <div class="warning">
 
-      ⚠ Confirmation Score/Strength কোনোভাবেই
-      guaranteed win probability নয়।
-      এটি indicator-based analysis মাত্র।
+  <!-- MTF -->
+  <div class="card">
+
+    <h3 class="sectionTitle">
+      Multi-Timeframe Confirmation
+    </h3>
+
+    <div class="mtf" id="mtfBox">
+
+      <div class="mtfItem">
+        <div class="mtfTf">5 MIN</div>
+        <div class="mtfTrend">—</div>
+      </div>
+
+      <div class="mtfItem">
+        <div class="mtfTf">15 MIN</div>
+        <div class="mtfTrend">—</div>
+      </div>
+
+      <div class="mtfItem">
+        <div class="mtfTf">1 HOUR</div>
+        <div class="mtfTrend">—</div>
+      </div>
 
     </div>
 
@@ -865,917 +731,374 @@
 
 
   <!-- PREVIOUS CANDLE -->
-
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       Previous Candle Confirmation
-    </div>
+    </h3>
 
+    <div class="metric">
+      <div class="metricName">
+        PREVIOUS CLOSED CANDLE
+      </div>
 
-    <div class="candleBox">
-
-      <div
-        id="previousMain"
-        class="candleMain">
-
+      <div class="metricValue" id="previousText">
         —
-
       </div>
-
-
-      <div
-        id="previousSub"
-        class="candleSub">
-
-        Signal calculation uses the previous closed candle.
-
-      </div>
-
     </div>
 
   </div>
 
 
   <!-- CONFIRMATIONS -->
-
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       Confirmations
-    </div>
+    </h3>
 
+    <div class="label">BUY CONFIRMATIONS</div>
 
-    <div class="label">
-      BUY CONFIRMATIONS
-    </div>
-
-
-    <div id="buyConfirmations">
-
-      <div class="confirm">
+    <div id="buyReasons">
+      <div class="reason">
         No confirmation
       </div>
-
     </div>
 
+    <br>
 
-    <div
-      class="label"
-      style="margin-top:12px">
+    <div class="label">SELL CONFIRMATIONS</div>
 
-      SELL CONFIRMATIONS
-
-    </div>
-
-
-    <div id="sellConfirmations">
-
-      <div class="confirm">
+    <div id="sellReasons">
+      <div class="reason">
         No confirmation
       </div>
-
     </div>
 
   </div>
 
 
-  <!-- FLOATING BUTTON -->
-
+  <!-- FLOATING -->
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       Quotex Floating Button
+    </h3>
+
+    <div class="metric">
+      <div class="metricName">STATUS</div>
+      <div class="metricValue">
+        MS
+      </div>
     </div>
 
+    <br>
 
-    <div class="floatingPreview">
-
-      <button
-        class="floatingButton"
-        onclick="analyze()">
-
-        MS
-
-      </button>
-
-
-      <div style="font-size:13px;color:#a9b8c8">
-
-        ভবিষ্যৎ Android version-এ এই MS button
-        Quotex chart-এর উপর floating থাকবে।
-        চাপলে একই Auto Analysis চালু হবে।
-
-      </div>
-
+    <div class="signalMessage">
+      Android overlay permission will be added in the dedicated
+      floating-button step. It will trigger analysis only and
+      will never auto-click or place a trade.
     </div>
 
   </div>
 
 
-  <!-- AI CHAT -->
-
+  <!-- AI -->
   <div class="card">
 
-    <div class="sectionTitle">
+    <h3 class="sectionTitle">
       MD Shawon AI
-    </div>
+    </h3>
 
-
-    <div class="chatInput">
-
-      <input
-        id="chat"
-        placeholder="ট্রেডিং সম্পর্কে প্রশ্ন করুন..."
-      >
-
-
-      <button onclick="askAI()">
-        SEND
-      </button>
-
-    </div>
-
-
-    <div
-      id="chatAnswer"
-      class="chatAnswer">
+    <div class="signalMessage">
+      Market analysis is running through the secure Worker.
+      Paid AI chat is currently disabled.
     </div>
 
   </div>
 
 
   <div class="footer">
-
-    Indicator-based analysis only
-    • No guaranteed profit
-
+    Indicator-based analysis only • No guaranteed profit<br>
+    BUY / SELL / WAIT are analytical signals, not financial guarantees.
   </div>
 
 </div>
 
 
+<button class="floating" id="floatingBtn">
+  MS
+</button>
+
 
 <script>
-
-
-/* =====================================================
-   MD SHAWON TRADERS
-   FRONTEND v2.5
-   ===================================================== */
-
 
 const WORKER_URL =
   "https://lingering-shadow-d7fb.hmshawonislam2.workers.dev";
 
 
-/* -----------------------------------------------------
-   BASIC HELPERS
-   ----------------------------------------------------- */
+let mode = "REAL";
+let interval = "1min";
 
 
-function setText(id, value) {
-
-  const el =
-    document.getElementById(id);
-
-  if (!el) return;
+const $ = id =>
+  document.getElementById(id);
 
 
-  if (
-    value === undefined ||
-    value === null ||
-    value === ""
-  ) {
+/* =========================
+   MODE
+========================= */
 
-    el.textContent = "—";
+$("realBtn").addEventListener(
+  "click",
+  () => {
 
-  } else {
+    mode = "REAL";
 
-    el.textContent = value;
+    $("realBtn").classList.add("active");
+    $("otcBtn").classList.remove("active");
 
-  }
+    $("targetMode").innerText =
+      "REAL MARKET";
 
-}
-
-
-
-function number(value, digits = 5) {
-
-  if (
-    value === undefined ||
-    value === null ||
-    value === "" ||
-    Number.isNaN(Number(value))
-  ) {
-
-    return "—";
+    clearAnalysis();
 
   }
+);
 
 
-  return Number(value).toFixed(digits);
+$("otcBtn").addEventListener(
+  "click",
+  () => {
 
-}
+    mode = "OTC";
 
+    $("otcBtn").classList.add("active");
+    $("realBtn").classList.remove("active");
 
+    $("targetMode").innerText =
+      "QUOTEX OTC";
 
-function clearConfirmations(id) {
+    clearAnalysis();
 
-  const el =
-    document.getElementById(id);
-
-  if (el) {
-
-    el.innerHTML = "";
-
-  }
-
-}
-
-
-
-function addConfirmation(id, text, type) {
-
-  const container =
-    document.getElementById(id);
-
-  if (!container) return;
-
-
-  const div =
-    document.createElement("div");
-
-
-  div.className =
-    "confirm " +
-    (
-      type === "buy"
-        ? "buyConfirm"
-        : "sellConfirm"
+    setSignal(
+      "WAIT",
+      "Verified Quotex OTC data is not connected.",
+      0
     );
 
-
-  div.textContent =
-    "✓ " + text;
-
-
-  container.appendChild(div);
-
-}
+  }
+);
 
 
-/* -----------------------------------------------------
-   SIGNAL COLOR
-   ----------------------------------------------------- */
+/* =========================
+   TIMEFRAME
+========================= */
+
+document
+  .querySelectorAll(".tf")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(".tf")
+          .forEach(x =>
+            x.classList.remove("active")
+          );
+
+        button.classList.add("active");
+
+        interval =
+          button.dataset.tf;
+
+        $("targetTf").innerText =
+          timeframeText(interval);
+
+        clearAnalysis();
+
+      }
+    );
+
+  });
 
 
-function applySignal(signal) {
+/* =========================
+   SYMBOL
+========================= */
 
-  const el =
-    document.getElementById("signal");
+$("symbol").addEventListener(
+  "change",
+  () => {
 
+    $("targetSymbol").innerText =
+      $("symbol").value;
 
-  el.className =
-    "signal";
-
-
-  if (signal === "BUY") {
-
-    el.classList.add("buy");
+    clearAnalysis();
 
   }
-
-  else if (signal === "SELL") {
-
-    el.classList.add("sell");
-
-  }
-
-  else if (signal === "STRONG BUY") {
-
-    el.classList.add("buy");
-
-  }
-
-  else if (signal === "STRONG SELL") {
-
-    el.classList.add("sell");
-
-  }
-
-  else {
-
-    el.classList.add("wait");
-
-  }
+);
 
 
-  el.textContent =
-    signal || "WAIT";
+/* =========================
+   AUTO ANALYZE
+========================= */
 
-}
+$("autoBtn").addEventListener(
+  "click",
+  analyze
+);
 
 
-/* -----------------------------------------------------
-   MAIN ANALYSIS
-   ----------------------------------------------------- */
+/* =========================
+   FLOATING BUTTON
+========================= */
+
+$("floatingBtn").addEventListener(
+  "click",
+  analyze
+);
 
 
-async function analyze() {
+/* =========================
+   ANALYZE
+========================= */
 
+async function analyze(){
 
   const button =
-    document.getElementById("analyzeButton");
-
-
-  const mode =
-    document.getElementById("mode").value;
-
+    $("autoBtn");
 
   const symbol =
-    document.getElementById("symbol").value;
+    $("symbol").value;
 
+  $("targetSymbol").innerText =
+    symbol;
 
-  const interval =
-    document.getElementById("interval").value;
+  $("targetTf").innerText =
+    timeframeText(interval);
 
+  $("targetMode").innerText =
+    mode === "OTC"
+      ? "QUOTEX OTC"
+      : "REAL MARKET";
 
-  const status =
-    document.getElementById("status");
+  clearError();
 
+  if(mode === "OTC"){
 
-  /* Loading */
+    setSignal(
+      "WAIT",
+      "Verified Quotex OTC data is not connected.",
+      0
+    );
+
+    showError(
+      "OTC data is unavailable. No fake OTC signal will be generated."
+    );
+
+    return;
+  }
 
 
   button.disabled = true;
-
-  button.textContent =
+  button.classList.add("loading");
+  button.innerText =
     "⏳ ANALYZING...";
 
 
-  status.textContent =
-    "Market data নেওয়া হচ্ছে...";
-
-
-  applySignal("ANALYZING");
-
-
-  setText(
-    "strength",
-    "Please wait..."
+  setSignal(
+    "WAIT",
+    "Fetching real market data...",
+    0
   );
 
 
-  try {
-
+  try{
 
     const response =
       await fetch(
         WORKER_URL + "/market",
         {
+          method:"POST",
 
-          method: "POST",
-
-          headers: {
-
+          headers:{
             "Content-Type":
               "application/json"
-
           },
 
-          body:
-            JSON.stringify({
+          body:JSON.stringify({
 
-              symbol:
-                symbol,
+            symbol,
 
-              interval:
-                interval,
+            interval,
 
-              mode:
-                mode,
+            mode:"REAL",
 
-              style:
-                "STRICT"
+            style:"STRICT"
 
-            })
-
+          })
         }
       );
 
 
-    let data;
+    let data = null;
 
-
-    try {
-
+    try{
       data =
         await response.json();
-
-    }
-
-    catch {
-
+    }catch{
       throw new Error(
-        "Server থেকে valid JSON পাওয়া যায়নি।"
+        "Worker returned invalid JSON."
       );
-
     }
 
 
-    /* ------------------------------------------------
-       HTTP / SERVER ERROR
-       ------------------------------------------------ */
-
-
-    if (
+    if(
       !response.ok ||
-      !data.ok
-    ) {
+      !data ||
+      data.ok !== true
+    ){
 
       throw new Error(
-        data.error ||
-        (
-          mode === "OTC"
-            ? "OTC market data unavailable."
-            : "Market analysis failed."
-        )
+        data?.message ||
+        data?.error ||
+        "Market analysis failed."
       );
 
     }
 
 
-    const a =
-      data.analysis || {};
+    render(data);
 
 
-    /* ------------------------------------------------
-       SIGNAL
-       ------------------------------------------------ */
-
-
-    const sig =
-      a.signal || "WAIT";
-
-
-    applySignal(sig);
-
-
-    /* ------------------------------------------------
-       STRENGTH
-       ------------------------------------------------ */
-
-
-    setText(
-      "strength",
-      "Confirmation Strength: " +
-      (
-        a.strength ||
-        "UNKNOWN"
-      )
-    );
-
-
-    /* ------------------------------------------------
-       SCORE
-       ------------------------------------------------ */
-
-
-    setText(
-      "score",
-      "Confirmation Score: " +
-      (
-        a.score !== undefined
-          ? a.score
-          : "—"
-      )
-    );
-
-
-    /* ------------------------------------------------
-       TARGET
-       ------------------------------------------------ */
-
-
-    const analyzedCandle =
-      a.analyzedCandle ||
-      "PREVIOUS CLOSED CANDLE";
-
-
-    const target =
-      a.target ||
-      "NEXT CANDLE";
-
-
-    setText(
-      "target",
-      analyzedCandle +
-      " → " +
-      target
-    );
-
-
-    /* ------------------------------------------------
-       BASIC MARKET DATA
-       ------------------------------------------------ */
-
-
-    setText(
-      "price",
-      number(
-        data.livePrice !== undefined
-          ? data.livePrice
-          : a.price,
-        6
-      )
-    );
-
-
-    setText(
-      "trend",
-      a.trend
-    );
-
-
-    setText(
-      "rsi",
-      number(
-        a.indicators?.rsi,
-        2
-      )
-    );
-
-
-    setText(
-      "momentum",
-      number(
-        a.momentum,
-        4
-      )
-    );
-
-
-    setText(
-      "ema9",
-      number(
-        a.indicators?.ema9,
-        6
-      )
-    );
-
-
-    setText(
-      "ema21",
-      number(
-        a.indicators?.ema21,
-        6
-      )
-    );
-
-
-    setText(
-      "ema50",
-      number(
-        a.indicators?.ema50,
-        6
-      )
-    );
-
-
-    setText(
-      "macd",
-      number(
-        a.indicators?.macd,
-        8
-      )
-    );
-
-
-    setText(
-      "atr",
-      number(
-        a.indicators?.atr,
-        8
-      )
-    );
-
-
-    setText(
-      "pressure",
-      a.pressure
-        ? (
-            a.pressure +
-            (
-              a.pressureValue !== undefined
-                ? " (" +
-                  number(
-                    a.pressureValue,
-                    2
-                  ) +
-                  ")"
-                : ""
-            )
-          )
-        : "—"
-    );
-
-
-    setText(
-      "support",
-      number(
-        a.support,
-        6
-      )
-    );
-
-
-    setText(
-      "resistance",
-      number(
-        a.resistance,
-        6
-      )
-    );
-
-
-    setText(
-      "pattern",
-      a.candlePattern
-    );
-
-
-    /* ------------------------------------------------
-       PREVIOUS CANDLE
-       ------------------------------------------------ */
-
-
-    setText(
-      "previousCandle",
-      a.previousCandle
-    );
-
-
-    setText(
-      "previousStrength",
-      a.previousCandleStrength
-    );
-
-
-    setText(
-      "closedCandles",
-      data.closedCandleCount !== undefined
-        ? data.closedCandleCount
-        : a.validCandles
-    );
-
-
-    setText(
-      "previousMain",
-      a.previousCandle
-        ? (
-            a.previousCandle +
-            " • " +
-            (
-              a.previousCandleStrength ||
-              "UNKNOWN"
-            )
-          )
-        : "—"
-    );
-
-
-    setText(
-      "previousSub",
-      "Analysis: " +
-      (
-        a.analyzedCandle ||
-        "PREVIOUS CLOSED CANDLE"
-      ) +
-      " • Target: " +
-      (
-        a.target ||
-        "NEXT CANDLE"
-      )
-    );
-
-
-    /* ------------------------------------------------
-       BUY / SELL SCORES
-       ------------------------------------------------ */
-
-
-    setText(
-      "buyScore",
-      a.buyScore !== undefined
-        ? a.buyScore
-        : "—"
-    );
-
-
-    setText(
-      "sellScore",
-      a.sellScore !== undefined
-        ? a.sellScore
-        : "—"
-    );
-
-
-    /* ------------------------------------------------
-       CONFIRMATIONS
-       ------------------------------------------------ */
-
-
-    clearConfirmations(
-      "buyConfirmations"
-    );
-
-
-    clearConfirmations(
-      "sellConfirmations"
-    );
-
-
-    const buys =
-      Array.isArray(
-        a.confirmations?.buy
-      )
-        ? a.confirmations.buy
-        : [];
-
-
-    const sells =
-      Array.isArray(
-        a.confirmations?.sell
-      )
-        ? a.confirmations.sell
-        : [];
-
-
-    if (
-      buys.length === 0
-    ) {
-
-      document.getElementById(
-        "buyConfirmations"
-      ).innerHTML =
-        '<div class="confirm">No confirmation</div>';
-
-    }
-
-    else {
-
-      buys.forEach(
-        item => {
-
-          addConfirmation(
-            "buyConfirmations",
-            item,
-            "buy"
-          );
-
-        }
-      );
-
-    }
-
-
-    if (
-      sells.length === 0
-    ) {
-
-      document.getElementById(
-        "sellConfirmations"
-      ).innerHTML =
-        '<div class="confirm">No confirmation</div>';
-
-    }
-
-    else {
-
-      sells.forEach(
-        item => {
-
-          addConfirmation(
-            "sellConfirmations",
-            item,
-            "sell"
-          );
-
-        }
-      );
-
-    }
-
-
-    /* ------------------------------------------------
-       STATUS
-       ------------------------------------------------ */
-
-
-    if (mode === "OTC") {
-
-      status.textContent =
-        "OTC selected • Reliable OTC feed না থাকলে signal দেওয়া হবে না.";
-
-    }
-
-    else {
-
-      status.textContent =
-        "Analysis complete • " +
-        (
-          data.provider ||
-          "Market data"
-        ) +
-        " • " +
-        symbol +
-        " • " +
-        interval;
-
-    }
-
-
-  }
-
-  catch (error) {
-
+  }catch(error){
 
     console.error(error);
 
-
-    applySignal("WAIT");
-
-
-    setText(
-      "strength",
-      "Analysis unavailable"
+    setSignal(
+      "WAIT",
+      "Analysis unavailable",
+      0
     );
 
-
-    setText(
-      "score",
-      "Confirmation Score: —"
-    );
-
-
-    setText(
-      "target",
-      "No reliable analysis available"
-    );
-
-
-    setText(
-      "previousMain",
-      "—"
-    );
-
-
-    setText(
-      "previousSub",
-      "No reliable candle analysis available."
-    );
-
-
-    status.textContent =
+    showError(
       "❌ " +
-      (
-        error.message ||
-        "Analysis failed"
-      );
-
-
-    clearConfirmations(
-      "buyConfirmations"
+      (error.message ||
+       "Market analysis failed.")
     );
 
-
-    clearConfirmations(
-      "sellConfirmations"
-    );
-
-
-    document.getElementById(
-      "buyConfirmations"
-    ).innerHTML =
-      '<div class="confirm">No confirmation</div>';
-
-
-    document.getElementById(
-      "sellConfirmations"
-    ).innerHTML =
-      '<div class="confirm">No confirmation</div>';
-
-  }
-
-
-  finally {
-
+  }finally{
 
     button.disabled = false;
 
+    button.classList.remove(
+      "loading"
+    );
 
-    button.textContent =
+    button.innerText =
       "⚡ AUTO ANALYZE";
 
   }
@@ -1783,121 +1106,539 @@ async function analyze() {
 }
 
 
-/* -----------------------------------------------------
-   LOCAL AI HELPER
-   ----------------------------------------------------- */
+/* =========================
+   RENDER
+========================= */
+
+function render(data){
+
+  setSignal(
+    data.signal || "WAIT",
+    signalMessage(data.signal),
+    Number(data.strength || 0)
+  );
 
 
-function askAI() {
+  setText(
+    "livePrice",
+    formatNumber(data.livePrice)
+  );
+
+  setText(
+    "trend",
+    data.trend || "—"
+  );
+
+  setText(
+    "rsi",
+    formatNumber(data.rsi,2)
+  );
+
+  setText(
+    "momentum",
+    data.momentum || "—"
+  );
+
+  setText(
+    "ema9",
+    formatNumber(data.ema9)
+  );
+
+  setText(
+    "ema21",
+    formatNumber(data.ema21)
+  );
+
+  setText(
+    "ema50",
+    formatNumber(data.ema50)
+  );
 
 
-  const input =
-    document.getElementById("chat");
+  const macd =
+    data.macd || {};
+
+  setText(
+    "macd",
+    macd.histogram != null
+      ? formatNumber(
+          macd.histogram,
+          6
+        )
+      : "—"
+  );
 
 
-  const answer =
-    document.getElementById(
-      "chatAnswer"
+  setText(
+    "atr",
+    formatNumber(data.atr)
+  );
+
+  setText(
+    "pressure",
+    data.pressure || "—"
+  );
+
+  setText(
+    "support",
+    formatNumber(data.support)
+  );
+
+  setText(
+    "resistance",
+    formatNumber(data.resistance)
+  );
+
+  setText(
+    "pattern",
+    data.pattern || "—"
+  );
+
+
+  const previous =
+    data.previousCandle || "—";
+
+  setText(
+    "previousCandle",
+    previous
+  );
+
+  setText(
+    "previousText",
+    previous
+  );
+
+
+  setText(
+    "candleStrength",
+    candleStrength(previous)
+  );
+
+  setText(
+    "closedCandles",
+    data.closedCandles ?? "—"
+  );
+
+
+  setText(
+    "buyScore",
+    data.buyScore ?? "—"
+  );
+
+  setText(
+    "sellScore",
+    data.sellScore ?? "—"
+  );
+
+
+  renderReasons(
+    data.reasons || []
+  );
+
+
+  renderMTF(
+    data.mtf || {}
+  );
+
+
+  clearError();
+
+}
+
+
+/* =========================
+   SIGNAL
+========================= */
+
+function setSignal(
+  signal,
+  message,
+  strength
+){
+
+  const card =
+    $("signalCard");
+
+  card.className =
+    "card signal " +
+    signalClass(signal);
+
+  $("signal").innerText =
+    signal;
+
+  $("signalMessage").innerText =
+    message;
+
+  $("strength").innerText =
+    strength > 0
+      ? strength
+      : "—";
+}
+
+
+function signalClass(signal){
+
+  const s =
+    String(signal)
+      .toUpperCase();
+
+  if(s === "BUY")
+    return "buy";
+
+  if(s === "SELL")
+    return "sell";
+
+  if(s === "STRONG BUY")
+    return "strongbuy";
+
+  if(s === "STRONG SELL")
+    return "strongsell";
+
+  return "wait";
+}
+
+
+function signalMessage(signal){
+
+  switch(
+    String(signal)
+      .toUpperCase()
+  ){
+
+    case "STRONG BUY":
+      return "Strong bullish confirmation.";
+
+    case "BUY":
+      return "Bullish confirmation detected.";
+
+    case "STRONG SELL":
+      return "Strong bearish confirmation.";
+
+    case "SELL":
+      return "Bearish confirmation detected.";
+
+    default:
+      return "No reliable trade confirmation.";
+  }
+}
+
+
+/* =========================
+   REASONS
+========================= */
+
+function renderReasons(reasons){
+
+  const buyBox =
+    $("buyReasons");
+
+  const sellBox =
+    $("sellReasons");
+
+  buyBox.innerHTML = "";
+  sellBox.innerHTML = "";
+
+
+  if(!Array.isArray(reasons) ||
+     reasons.length === 0){
+
+    buyBox.innerHTML =
+      '<div class="reason">No confirmation</div>';
+
+    sellBox.innerHTML =
+      '<div class="reason">No confirmation</div>';
+
+    return;
+  }
+
+
+  const buyReasons =
+    reasons.filter(
+      x =>
+        /bullish|buyer|buy|EMA 9 >|MACD bullish/i
+          .test(String(x))
+    );
+
+  const sellReasons =
+    reasons.filter(
+      x =>
+        /bearish|seller|sell|EMA 9 <|MACD bearish/i
+          .test(String(x))
     );
 
 
-  const text =
-    input.value.trim();
+  addReasons(
+    buyBox,
+    buyReasons
+  );
+
+  addReasons(
+    sellBox,
+    sellReasons
+  );
+
+}
 
 
-  if (!text) {
+function addReasons(box,reasons){
 
-    answer.textContent =
-      "আপনার প্রশ্ন লিখুন।";
+  if(!reasons.length){
+
+    box.innerHTML =
+      '<div class="reason">No confirmation</div>';
 
     return;
-
   }
 
+  reasons
+    .slice(0,8)
+    .forEach(reason => {
 
-  const lower =
-    text.toLowerCase();
+      const div =
+        document.createElement("div");
+
+      div.className =
+        "reason";
+
+      div.innerText =
+        "• " + reason;
+
+      box.appendChild(div);
+
+    });
+
+}
 
 
-  if (
-    lower.includes("buy") ||
-    lower.includes("sell")
-  ) {
+/* =========================
+   MTF
+========================= */
 
-    answer.textContent =
-      "BUY/SELL নেওয়ার আগে trend, RSI, EMA, MACD, support/resistance, previous candle এবং confirmation একসাথে যাচাই করুন। Confirmation দুর্বল হলে WAIT রাখাই নিরাপদ।";
+function renderMTF(mtf){
 
+  const box =
+    $("mtfBox");
+
+  box.innerHTML = "";
+
+  const list = [
+    ["5min","5 MIN"],
+    ["15min","15 MIN"],
+    ["1h","1 HOUR"]
+  ];
+
+
+  list.forEach(
+    ([key,label]) => {
+
+      const data =
+        mtf[key];
+
+      const trend =
+        data?.trend ||
+        "UNKNOWN";
+
+      const div =
+        document.createElement("div");
+
+      div.className =
+        "mtfItem";
+
+      div.innerHTML = `
+        <div class="mtfTf">
+          ${label}
+        </div>
+        <div class="mtfTrend">
+          ${trend}
+        </div>
+      `;
+
+      box.appendChild(div);
+
+    }
+  );
+
+}
+
+
+/* =========================
+   CLEAR
+========================= */
+
+function clearAnalysis(){
+
+  setText("livePrice","—");
+  setText("trend","—");
+  setText("rsi","—");
+  setText("momentum","—");
+  setText("ema9","—");
+  setText("ema21","—");
+  setText("ema50","—");
+  setText("macd","—");
+  setText("atr","—");
+  setText("pressure","—");
+  setText("support","—");
+  setText("resistance","—");
+  setText("pattern","—");
+  setText("previousCandle","—");
+  setText("candleStrength","—");
+  setText("closedCandles","—");
+  setText("buyScore","—");
+  setText("sellScore","—");
+
+  $("buyReasons").innerHTML =
+    '<div class="reason">No confirmation</div>';
+
+  $("sellReasons").innerHTML =
+    '<div class="reason">No confirmation</div>';
+
+  $("mtfBox").innerHTML =
+    `
+    <div class="mtfItem">
+      <div class="mtfTf">5 MIN</div>
+      <div class="mtfTrend">—</div>
+    </div>
+
+    <div class="mtfItem">
+      <div class="mtfTf">15 MIN</div>
+      <div class="mtfTrend">—</div>
+    </div>
+
+    <div class="mtfItem">
+      <div class="mtfTf">1 HOUR</div>
+      <div class="mtfTrend">—</div>
+    </div>
+    `;
+
+  setSignal(
+    "WAIT",
+    "Ready for analysis",
+    0
+  );
+
+  clearError();
+
+}
+
+
+/* =========================
+   HELPERS
+========================= */
+
+function setText(id,value){
+
+  const el =
+    $(id);
+
+  if(el){
+    el.innerText =
+      value == null
+        ? "—"
+        : String(value);
   }
 
-  else if (
-    lower.includes("rsi")
-  ) {
+}
 
-    answer.textContent =
-      "RSI momentum এবং overbought/oversold condition বুঝতে সাহায্য করে। শুধু RSI দেখে BUY বা SELL নেওয়া উচিত নয়।";
 
-  }
+function formatNumber(
+  value,
+  digits = 6
+){
 
-  else if (
-    lower.includes("ema")
-  ) {
+  const n =
+    Number(value);
 
-    answer.textContent =
-      "EMA trend direction বুঝতে সাহায্য করে। EMA 9, 21 এবং 50-এর alignment অন্য confirmation-এর সাথে মিলিয়ে দেখা হয়।";
+  if(!Number.isFinite(n))
+    return "—";
 
-  }
+  return n.toFixed(digits);
+}
 
-  else if (
-    lower.includes("macd")
-  ) {
 
-    answer.textContent =
-      "MACD momentum এবং trend confirmation-এর একটি অংশ। MACD একা signal-এর জন্য যথেষ্ট নয়।";
+function timeframeText(tf){
 
-  }
+  switch(tf){
 
-  else if (
-    lower.includes("support") ||
-    lower.includes("resistance")
-  ) {
+    case "1min":
+      return "1 MIN";
 
-    answer.textContent =
-      "Support হলো সম্ভাব্য buying-interest zone এবং resistance হলো সম্ভাব্য selling-interest zone। Rejection বা breakout confirmation থাকলে analysis আরও শক্তিশালী হতে পারে।";
+    case "5min":
+      return "5 MIN";
 
-  }
+    case "15min":
+      return "15 MIN";
 
-  else {
+    case "1h":
+      return "1 HOUR";
 
-    answer.textContent =
-      "আমি MD Shawon Traders-এর analysis helper। Pair, timeframe, trend, RSI, EMA, MACD, support, resistance, previous candle বা signal সম্পর্কে প্রশ্ন করতে পারেন।";
+    default:
+      return tf;
 
   }
 
 }
 
 
-/* -----------------------------------------------------
-   ENTER KEY FOR CHAT
-   ----------------------------------------------------- */
+function candleStrength(value){
 
+  if(!value)
+    return "—";
 
-document.getElementById(
-  "chat"
-).addEventListener(
-  "keydown",
-  function(event) {
-
-    if (
-      event.key === "Enter"
-    ) {
-
-      askAI();
-
-    }
-
+  if(
+    value === "STRONG BUYER" ||
+    value === "STRONG SELLER"
+  ){
+    return "STRONG";
   }
-);
 
+  if(
+    value === "BUYER" ||
+    value === "SELLER"
+  ){
+    return "MEDIUM";
+  }
+
+  return "NEUTRAL";
+}
+
+
+function showError(message){
+
+  const box =
+    $("errorBox");
+
+  box.innerText =
+    message;
+
+  box.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+function clearError(){
+
+  $("errorBox")
+    .classList.add(
+      "hidden"
+    );
+
+}
+
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+$("targetMode").innerText =
+  "REAL MARKET";
+
+$("targetSymbol").innerText =
+  $("symbol").value;
+
+$("targetTf").innerText =
+  "1 MIN";
 
 </script>
 
