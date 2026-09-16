@@ -6,646 +6,337 @@
 <title>MD Shawon Traders</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
+*{box-sizing:border-box}
 :root{
-  --bg:#050d17;
-  --card:#0b1828;
-  --card2:#091421;
-  --border:#18344b;
-  --cyan:#00e5ff;
-  --green:#00ff9d;
-  --red:#ff5577;
+  --bg:#05080d;
+  --panel:#0b1119;
+  --panel2:#0f1722;
+  --line:#1b2838;
+  --text:#eef6ff;
+  --muted:#8291a5;
+  --cyan:#20e6ff;
+  --green:#22e39a;
+  --red:#ff5573;
   --yellow:#ffd166;
-  --text:#eaf7ff;
-  --muted:#8198aa;
 }
-
-html,body{
+body{
   margin:0;
-  padding:0;
-  min-height:100%;
   background:
-    radial-gradient(circle at 50% -10%,#12334b 0,#07111f 38%,#050d17 100%);
+    radial-gradient(circle at 90% 0%,#123047 0,transparent 30%),
+    radial-gradient(circle at 0% 100%,#10251f 0,transparent 28%),
+    var(--bg);
   color:var(--text);
   font-family:Arial,Helvetica,sans-serif;
-}
-
-body{
   min-height:100vh;
 }
-
-button,
-input,
-select,
-textarea{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-button:active{
-  transform:scale(.98);
-}
+button,select,input{font:inherit}
+button{cursor:pointer}
 
 .app{
-  width:100%;
-  max-width:680px;
+  max-width:520px;
   margin:auto;
-  padding:12px;
+  min-height:100vh;
   padding-bottom:90px;
 }
 
-.header{
+.top{
+  padding:18px 16px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.brand{
   display:flex;
   align-items:center;
   gap:11px;
-  padding:7px 2px 16px;
 }
-
-.avatar{
-  width:48px;
-  height:48px;
-  border-radius:15px;
-  border:1px solid #21455d;
-  background:#0d2235;
-  overflow:hidden;
-  flex:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--cyan);
+.logo{
+  width:43px;height:43px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#20e6ff,#1676ff);
+  color:#001018;
   font-weight:900;
+  box-shadow:0 0 25px #20e6ff44;
 }
-
-.avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.brand{
-  flex:1;
-  min-width:0;
-}
-
-.brand h1{
-  margin:0;
-  color:var(--cyan);
-  font-size:22px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.brand p{
-  margin:4px 0 0;
-  color:var(--muted);
-  font-size:11px;
-}
-
+.brand h1{font-size:18px;margin:0}
+.brand p{font-size:11px;color:var(--muted);margin:4px 0 0}
 .menu{
-  width:45px;
-  height:45px;
-  border:1px solid var(--border);
-  border-radius:14px;
-  background:#0b1a2b;
-  color:white;
-  font-size:22px;
+  width:42px;height:42px;border:1px solid var(--line);
+  border-radius:13px;background:#0b1119;color:white;font-size:21px;
 }
 
-.card{
-  background:linear-gradient(145deg,rgba(13,31,49,.98),rgba(7,19,31,.98));
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:14px;
-  margin-bottom:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.20);
+.hero{
+  margin:8px 16px 14px;
+  padding:18px;
+  border:1px solid #1a3344;
+  border-radius:24px;
+  background:linear-gradient(145deg,#0d1b27,#081019);
 }
-
-.label{
-  color:#718a9d;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.8px;
-  margin-bottom:8px;
-}
-
-.sectionTitle{
-  margin:0 0 12px;
-  font-size:15px;
-}
-
-.row{
+.hero-top{
   display:flex;
-  gap:8px;
+  justify-content:space-between;
+  align-items:center;
 }
-
-.mode,
-.tf{
-  border:1px solid #21435b;
-  background:#0d2134;
-  color:#9db3c2;
-  border-radius:12px;
-  padding:12px 7px;
-  font-size:11px;
-  font-weight:900;
+.live{
+  display:flex;align-items:center;gap:7px;
+  font-size:11px;color:#94a5b7;
 }
-
-.mode{
-  flex:1;
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 12px var(--green);
 }
-
-.mode.active,
-.tf.active{
-  border-color:var(--cyan);
-  background:#073b4b;
-  color:var(--cyan);
+.price{
+  font-size:32px;font-weight:800;
+  letter-spacing:-1px;margin:14px 0 3px;
 }
+.price-sub{font-size:11px;color:var(--muted)}
 
-.grid2{
+.signal{
+  margin-top:17px;
+  padding:16px;
+  border-radius:18px;
+  background:#070b11;
+  border:1px solid var(--line);
+  text-align:center;
+}
+.signal-label{font-size:10px;color:var(--muted);letter-spacing:1.5px}
+.signal-value{
+  font-size:31px;font-weight:900;margin:7px 0;
+}
+.signal-value.BUY,.signal-value.STRONGBUY{color:var(--green)}
+.signal-value.SELL,.signal-value.STRONGSELL{color:var(--red)}
+.signal-value.WAIT{color:var(--yellow)}
+.scoreline{font-size:11px;color:var(--muted)}
+
+.controls{
+  margin:0 16px 14px;
+  display:grid;
+  gap:10px;
+}
+.row{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
+  gap:10px;
 }
-
-.tf{
-  width:100%;
+.field{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:15px;
+  padding:10px;
 }
-
-select,
-input,
-textarea{
+.field label{
+  display:block;
+  font-size:9px;
+  color:var(--muted);
+  margin-bottom:7px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+select{
   width:100%;
-  border:1px solid #21435b;
-  background:#0a1c2e;
-  color:var(--text);
-  border-radius:12px;
-  padding:12px;
+  background:transparent;
+  border:0;
+  color:white;
   outline:none;
 }
-
-textarea{
-  min-height:90px;
-  resize:none;
-}
+option{background:#0b1119}
 
 .auto{
   width:100%;
-  min-height:64px;
   border:0;
-  border-radius:17px;
-  background:linear-gradient(135deg,#00e5ff,#00ff9d);
-  color:#001018;
-  font-size:17px;
+  border-radius:18px;
+  padding:17px;
+  color:#001016;
+  font-size:16px;
   font-weight:900;
-  letter-spacing:.6px;
-  box-shadow:0 12px 35px rgba(0,229,255,.17);
+  letter-spacing:.5px;
+  background:linear-gradient(100deg,#20e6ff,#22e39a);
+  box-shadow:0 10px 30px #20e6ff22;
 }
+.auto:disabled{opacity:.55}
 
-.auto.loading{
-  opacity:.65;
+.section{
+  margin:0 16px 14px;
+  padding:15px;
+  background:rgba(11,17,25,.88);
+  border:1px solid var(--line);
+  border-radius:20px;
 }
-
-.signal{
-  text-align:center;
-  padding:21px 14px;
-}
-
-.signalTitle{
-  color:#71899c;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:1.2px;
-}
-
-.signalValue{
-  font-size:39px;
-  font-weight:900;
-  margin:8px 0;
-}
-
-.signal.wait .signalValue{
-  color:var(--yellow);
-}
-
-.signal.buy .signalValue,
-.signal.strongbuy .signalValue{
-  color:var(--green);
-}
-
-.signal.sell .signalValue,
-.signal.strongsell .signalValue{
-  color:var(--red);
-}
-
-.signalMessage{
-  color:#9db2c0;
-  font-size:12px;
-  line-height:1.5;
-}
-
-.score{
-  margin-top:12px;
-  color:#8198aa;
-  font-size:11px;
-}
-
-.metrics{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.metric{
-  background:#081522;
-  border:1px solid #152e43;
-  border-radius:12px;
-  padding:10px;
-}
-
-.metricName{
-  color:#6f8799;
-  font-size:9px;
-  font-weight:700;
-  margin-bottom:5px;
-}
-
-.metricValue{
-  color:#eefaff;
-  font-size:13px;
-  font-weight:900;
-  word-break:break-word;
-}
-
-.green{
-  color:var(--green)!important;
-}
-
-.red{
-  color:var(--red)!important;
-}
-
-.yellow{
-  color:var(--yellow)!important;
-}
-
-.cyan{
-  color:var(--cyan)!important;
-}
-
-.scoreBox{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.scoreItem{
-  text-align:center;
-  background:#081522;
-  border:1px solid #152e43;
-  border-radius:13px;
-  padding:13px;
-}
-
-.scoreLabel{
-  color:#71889b;
-  font-size:9px;
-  font-weight:bold;
-}
-
-.scoreNumber{
-  margin-top:5px;
-  font-size:25px;
-  font-weight:900;
-}
-
-.buy{
-  color:var(--green);
-}
-
-.sell{
-  color:var(--red);
-}
-
-.mtf{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:7px;
-}
-
-.mtfItem{
-  background:#081522;
-  border:1px solid #152e43;
-  border-radius:11px;
-  padding:10px 6px;
-  text-align:center;
-}
-
-.mtfTf{
-  color:#70899b;
-  font-size:9px;
-}
-
-.mtfTrend{
-  margin-top:5px;
-  font-size:11px;
-  font-weight:900;
-}
-
-.reason{
-  background:#081522;
-  border:1px solid #152e43;
-  border-radius:10px;
-  padding:9px;
-  margin:6px 0;
-  color:#b8cbd7;
-  font-size:11px;
-  line-height:1.45;
-}
-
-.liquidity{
-  border:1px solid #19435a;
-  background:
-    radial-gradient(circle at 20% 0%,rgba(0,229,255,.10),transparent 55%),
-    #081522;
-  border-radius:15px;
-  padding:13px;
-}
-
-.liqHeader{
+.section-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:8px;
-  margin-bottom:11px;
+  margin-bottom:13px;
+}
+.section-title{font-size:14px;font-weight:800}
+.section-badge{
+  font-size:9px;color:var(--cyan);
+  border:1px solid #20e6ff33;
+  padding:5px 8px;border-radius:20px;
 }
 
-.liqBadge{
-  padding:6px 9px;
-  border-radius:999px;
-  font-size:9px;
-  font-weight:900;
-  background:#123348;
-  color:var(--cyan);
-}
-
-.liqGrid{
+.grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+}
+.metric{
+  background:var(--panel2);
+  border:1px solid #172331;
+  border-radius:13px;
+  padding:12px;
+}
+.metric small{display:block;color:var(--muted);font-size:9px}
+.metric strong{display:block;margin-top:7px;font-size:15px}
+
+.liquidity-main{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  margin-bottom:12px;
+}
+.liq-score{
+  width:72px;height:72px;border-radius:50%;
+  border:5px solid #203142;
+  display:grid;place-items:center;
+  font-size:19px;font-weight:900;
+}
+.liq-info strong{font-size:17px}
+.liq-info p{margin:5px 0 0;color:var(--muted);font-size:10px}
+
+.reason{
+  margin:0;
+  padding-left:18px;
+  color:#b9c7d5;
+  font-size:11px;
+  line-height:1.7;
+}
+.reason li{margin-bottom:3px}
+
+.confirm{
+  display:grid;
   gap:8px;
 }
-
-.liqItem{
-  background:#07121e;
-  border:1px solid #142d41;
-  border-radius:10px;
-  padding:9px;
-}
-
-.liqName{
-  color:#6d8598;
-  font-size:9px;
-}
-
-.liqValue{
-  margin-top:4px;
-  font-size:13px;
-  font-weight:900;
-}
-
-.uploadBox{
-  border:1px dashed #28617d;
-  background:#081522;
-  border-radius:14px;
-  padding:15px;
-  text-align:center;
-}
-
-.uploadBox input{
-  border:0;
-  padding:0;
-  background:transparent;
-}
-
-.preview{
-  width:100%;
-  max-height:300px;
-  object-fit:contain;
-  border-radius:12px;
-  margin-top:10px;
-  border:1px solid var(--border);
-}
-
-.chat{
-  max-height:250px;
-  overflow:auto;
-  margin-bottom:10px;
-}
-
-.msg{
-  padding:9px 11px;
-  border-radius:12px;
-  margin:6px 0;
-  font-size:11px;
-  line-height:1.5;
-}
-
-.bot{
-  background:#0a2232;
-  border:1px solid #17455c;
-}
-
-.user{
-  background:#063c37;
-  border:1px solid #11655b;
-  text-align:right;
-}
-
-.chatRow{
-  display:flex;
-  gap:7px;
-}
-
-.chatRow input{
-  flex:1;
-}
-
-.smallBtn{
-  border:1px solid #21435b;
-  background:#0d2134;
-  color:var(--cyan);
-  border-radius:11px;
+.confirm div{
   padding:10px 12px;
-  font-weight:900;
+  background:var(--panel2);
+  border-radius:11px;
+  font-size:11px;
+}
+.buy{border-left:3px solid var(--green)}
+.sell{border-left:3px solid var(--red)}
+
+.screenshot{
+  border:1px dashed #2b4054;
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+}
+.screenshot input{display:none}
+.upload{
+  display:inline-block;
+  padding:10px 14px;
+  margin-top:10px;
+  border-radius:12px;
+  background:#13202d;
+  color:white;
+  border:1px solid var(--line);
+}
+.preview{
+  width:100%;max-height:230px;object-fit:contain;
+  margin-top:12px;border-radius:12px;display:none;
 }
 
-.voiceBtn{
-  width:45px;
-  flex:none;
+.chatbox{
+  display:flex;gap:8px;
 }
+.chatbox input{
+  flex:1;
+  min-width:0;
+  background:#080e15;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:12px;color:white;outline:none;
+}
+.chatbox button{
+  width:48px;border:0;border-radius:13px;
+  background:var(--cyan);color:#001016;font-weight:900;
+}
+.chatlog{
+  max-height:180px;overflow:auto;margin-bottom:10px;
+  font-size:11px;
+}
+.msg{
+  padding:9px 11px;margin:6px 0;border-radius:12px;
+  background:#111a25;
+}
+.msg.me{text-align:right;background:#12353b}
 
-.floating{
+.bottom{
   position:fixed;
-  right:17px;
-  bottom:20px;
-  width:57px;
-  height:57px;
-  border-radius:50%;
-  border:1px solid var(--cyan);
-  background:#061d2b;
-  color:var(--cyan);
+  bottom:12px;left:50%;
+  transform:translateX(-50%);
+  width:min(488px,calc(100% - 30px));
+  display:flex;
+  justify-content:center;
+  pointer-events:none;
+}
+.float{
+  pointer-events:auto;
+  width:55px;height:55px;border-radius:50%;
+  border:1px solid #2c4b60;
+  background:#0d1721;color:var(--cyan);
   font-weight:900;
-  box-shadow:0 10px 30px rgba(0,0,0,.45);
-  z-index:50;
+  box-shadow:0 8px 30px #000;
 }
 
 .drawer{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.58);
-  z-index:100;
+  position:fixed;inset:0;
+  background:#0009;z-index:20;
   display:none;
 }
-
-.drawer.open{
-  display:block;
-}
-
-.drawerPanel{
-  position:absolute;
-  top:0;
-  right:0;
-  width:min(390px,92%);
-  height:100%;
+.drawer.open{display:block}
+.drawer-panel{
+  position:absolute;right:0;top:0;bottom:0;
+  width:min(350px,90%);
+  background:#080e15;
+  border-left:1px solid var(--line);
+  padding:20px;
   overflow:auto;
-  background:#071421;
-  border-left:1px solid #20435a;
-  padding:16px;
-  box-shadow:-15px 0 40px rgba(0,0,0,.4);
 }
-
-.drawerHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:15px;
+.drawer-head{
+  display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:20px;
 }
-
 .close{
-  width:40px;
-  height:40px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#0b1d2e;
-  color:white;
-  font-size:20px;
+  width:38px;height:38px;border:1px solid var(--line);
+  background:#101923;color:white;border-radius:11px;
 }
-
 .setting{
-  background:#0a1928;
-  border:1px solid #17344a;
-  border-radius:13px;
-  padding:11px;
-  margin-bottom:9px;
+  margin-bottom:14px;
 }
-
-.settingTitle{
-  font-size:11px;
-  font-weight:900;
-  margin-bottom:8px;
+.setting label{
+  display:block;font-size:10px;color:var(--muted);
+  margin-bottom:7px;
 }
-
-.switch{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+.setting input{
+  width:100%;background:#0d151f;
+  border:1px solid var(--line);border-radius:12px;
+  padding:11px;color:white;outline:none;
 }
-
-.switch input{
-  width:auto;
-}
-
 .save{
-  width:100%;
-  border:0;
-  padding:13px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#00e5ff,#00ff9d);
-  color:#001018;
+  width:100%;padding:13px;border:0;border-radius:13px;
+  background:linear-gradient(100deg,#20e6ff,#22e39a);
   font-weight:900;
 }
-
-.danger{
-  width:100%;
-  border:1px solid #683044;
-  padding:12px;
-  border-radius:13px;
-  background:#28121b;
-  color:#ff8da4;
-  font-weight:bold;
-  margin-top:8px;
+.note{
+  font-size:9px;color:#657487;
+  line-height:1.6;margin-top:15px;
 }
-
-.footer{
-  text-align:center;
-  color:#50697b;
-  font-size:9px;
-  line-height:1.6;
-  padding:10px 5px 25px;
-}
-
-.hidden{
-  display:none!important;
-}
-
-.error{
-  margin-top:10px;
-  background:#351521;
-  color:#ff91a7;
-  border:1px solid #653045;
-  border-radius:10px;
-  padding:10px;
-  font-size:11px;
-  text-align:left;
-}
-
-.statusDot{
-  display:inline-block;
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:var(--green);
-  margin-right:5px;
-}
-
-@media(max-width:370px){
-  .app{
-    padding:9px;
-  }
-
-  .brand h1{
-    font-size:20px;
-  }
-
-  .signalValue{
-    font-size:34px;
-  }
-
-  .metrics{
-    gap:6px;
-  }
-
-  .metric{
-    padding:9px;
-  }
-}
+.hidden{display:none}
 </style>
 </head>
 
@@ -653,712 +344,57 @@ textarea{
 
 <div class="app">
 
-<header class="header">
-
-  <div class="avatar" id="avatarBox">
-    MS
-  </div>
-
-  <div class="brand">
-    <h1 id="appTitle">MD Shawon Traders</h1>
-    <p>
-      <span class="statusDot"></span>
-      <span id="botSubtitle">AI Market Analysis • Quotex Companion</span>
-    </p>
-  </div>
-
-  <button class="menu" id="menuBtn">☰</button>
-
-</header>
-
-
-<!-- MODE -->
-
-<div class="card">
-
-  <div class="label">MARKET MODE</div>
-
-  <div class="row">
-
-    <button class="mode active" id="realBtn">
-      REAL MARKET
-    </button>
-
-    <button class="mode" id="otcBtn">
-      QUOTEX OTC
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- TIMEFRAME -->
-
-<div class="card">
-
-  <div class="label">TIMEFRAME</div>
-
-  <div class="grid2">
-
-    <button class="tf active" data-tf="1min">
-      1 MIN
-    </button>
-
-    <button class="tf" data-tf="5min">
-      5 MIN
-    </button>
-
-    <button class="tf" data-tf="15min">
-      15 MIN
-    </button>
-
-    <button class="tf" data-tf="1h">
-      1 HOUR
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- ASSET -->
-
-<div class="card">
-
-  <div class="label">ASSET / PAIR</div>
-
-  <select id="symbol">
-
-    <optgroup label="FOREX">
-      <option>EUR/USD</option>
-      <option>GBP/USD</option>
-      <option>USD/JPY</option>
-      <option>USD/CHF</option>
-      <option>USD/CAD</option>
-      <option>AUD/USD</option>
-      <option>NZD/USD</option>
-      <option>EUR/GBP</option>
-      <option>EUR/JPY</option>
-      <option>EUR/CHF</option>
-      <option>GBP/JPY</option>
-      <option>GBP/CHF</option>
-      <option>GBP/AUD</option>
-      <option>GBP/CAD</option>
-      <option>AUD/JPY</option>
-      <option>AUD/CAD</option>
-      <option>AUD/CHF</option>
-      <option>CAD/JPY</option>
-      <option>CAD/CHF</option>
-      <option>CHF/JPY</option>
-      <option>NZD/JPY</option>
-    </optgroup>
-
-    <optgroup label="METALS">
-      <option>XAU/USD</option>
-      <option>XAG/USD</option>
-    </optgroup>
-
-    <optgroup label="CRYPTO">
-      <option>BTC/USD</option>
-      <option>ETH/USD</option>
-      <option>LTC/USD</option>
-      <option>XRP/USD</option>
-    </optgroup>
-
-    <optgroup label="INDICES">
-      <option>US30</option>
-      <option>NAS100</option>
-      <option>SPX500</option>
-      <option>GER30</option>
-      <option>UK100</option>
-      <option>JPN225</option>
-    </optgroup>
-
-  </select>
-
-</div>
-
-
-<!-- AUTO -->
-
-<div class="card">
-
-  <button class="auto" id="autoBtn">
-    ⚡ AUTO ANALYZE
-  </button>
-
-</div>
-
-
-<!-- SIGNAL -->
-
-<div class="card signal wait" id="signalCard">
-
-  <div class="signalTitle">
-    CURRENT SIGNAL
-  </div>
-
-  <div class="signalValue" id="signal">
-    WAIT
-  </div>
-
-  <div class="signalMessage" id="signalMessage">
-    Ready for analysis
-  </div>
-
-  <div class="score">
-    Confirmation Score:
-    <strong id="strength">—</strong>
-  </div>
-
-  <div id="errorBox" class="error hidden"></div>
-
-</div>
-
-
-<!-- TARGET -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    🎯 Analysis Target
-  </h3>
-
-  <div class="metrics">
-
-    <div class="metric">
-      <div class="metricName">MODE</div>
-      <div class="metricValue" id="targetMode">
-        REAL MARKET
-      </div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">PAIR</div>
-      <div class="metricValue" id="targetSymbol">
-        EUR/USD
-      </div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">TIMEFRAME</div>
-      <div class="metricValue" id="targetTf">
-        1 MIN
-      </div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">STATUS</div>
-      <div class="metricValue cyan" id="analysisStatus">
-        READY
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- MARKET -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    📊 Market Analysis
-  </h3>
-
-  <div class="metrics">
-
-    <div class="metric">
-      <div class="metricName">LIVE PRICE</div>
-      <div class="metricValue" id="livePrice">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">TREND</div>
-      <div class="metricValue" id="trend">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">RSI</div>
-      <div class="metricValue" id="rsi">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">MOMENTUM</div>
-      <div class="metricValue" id="momentum">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">EMA 9</div>
-      <div class="metricValue" id="ema9">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">EMA 21</div>
-      <div class="metricValue" id="ema21">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">EMA 50</div>
-      <div class="metricValue" id="ema50">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">MACD</div>
-      <div class="metricValue" id="macd">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">ATR</div>
-      <div class="metricValue" id="atr">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">PRESSURE</div>
-      <div class="metricValue" id="pressure">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">SUPPORT</div>
-      <div class="metricValue" id="support">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">RESISTANCE</div>
-      <div class="metricValue" id="resistance">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">CANDLE PATTERN</div>
-      <div class="metricValue" id="pattern">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">PREVIOUS CANDLE</div>
-      <div class="metricValue" id="previousCandle">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">CANDLE STRENGTH</div>
-      <div class="metricValue" id="candleStrength">—</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricName">CLOSED CANDLES</div>
-      <div class="metricValue" id="closedCandles">—</div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- LIQUIDITY -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    💧 Market Liquidity
-  </h3>
-
-  <div class="liquidity">
-
-    <div class="liqHeader">
-
+  <header class="top">
+    <div class="brand">
+      <div class="logo" id="logo">MS</div>
       <div>
-        <div class="label" style="margin:0">
-          LIQUIDITY ANALYSIS
-        </div>
+        <h1 id="appName">MD Shawon Traders</h1>
+        <p>AI MARKET TERMINAL • QUOTEX COMPANION</p>
+      </div>
+    </div>
+    <button class="menu" id="menuBtn">☰</button>
+  </header>
+
+  <section class="hero">
+    <div class="hero-top">
+      <div class="live"><span class="dot"></span> MARKET CONNECTION</div>
+      <span id="modeBadge" class="section-badge">REAL</span>
+    </div>
+
+    <div class="price" id="price">—</div>
+    <div class="price-sub" id="priceSub">Waiting for verified market data</div>
+
+    <div class="signal">
+      <div class="signal-label">NEXT CANDLE ANALYSIS</div>
+      <div class="signal-value WAIT" id="signal">WAIT</div>
+      <div class="scoreline" id="score">Confirmation: —</div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="row">
+      <div class="field">
+        <label>Market</label>
+        <select id="mode">
+          <option value="REAL">REAL MARKET</option>
+          <option value="OTC">QUOTEX OTC</option>
+        </select>
       </div>
 
-      <div class="liqBadge" id="liquidityStatus">
-        WAITING
+      <div class="field">
+        <label>Timeframe</label>
+        <select id="interval">
+          <option value="1min">1 MIN</option>
+          <option value="5min">5 MIN</option>
+          <option value="15min">15 MIN</option>
+          <option value="1h">1 HOUR</option>
+        </select>
       </div>
-
     </div>
 
-    <div class="liqGrid">
-
-      <div class="liqItem">
-        <div class="liqName">
-          LIQUIDITY SCORE
-        </div>
-        <div class="liqValue cyan" id="liquidityScore">
-          —
-        </div>
-      </div>
-
-      <div class="liqItem">
-        <div class="liqName">
-          MARKET CONDITION
-        </div>
-        <div class="liqValue" id="liquidityCondition">
-          —
-        </div>
-      </div>
-
-      <div class="liqItem">
-        <div class="liqName">
-          BUY-SIDE ZONE
-        </div>
-        <div class="liqValue green" id="buyLiquidity">
-          —
-        </div>
-      </div>
-
-      <div class="liqItem">
-        <div class="liqName">
-          SELL-SIDE ZONE
-        </div>
-        <div class="liqValue red" id="sellLiquidity">
-          —
-        </div>
-      </div>
-
-      <div class="liqItem">
-        <div class="liqName">
-          NEAREST ZONE
-        </div>
-        <div class="liqValue" id="nearestLiquidity">
-          —
-        </div>
-      </div>
-
-      <div class="liqItem">
-        <div class="liqName">
-          SWEEP / GRAB
-        </div>
-        <div class="liqValue" id="liquiditySweep">
-          —
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <div class="signalMessage" style="margin-top:9px">
-    Liquidity data will only be shown when supported by verified market data.
-    No random liquidity values are generated.
-  </div>
-
-</div>
-
-
-<!-- SCORES -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    📈 Signal Scores
-  </h3>
-
-  <div class="scoreBox">
-
-    <div class="scoreItem">
-      <div class="scoreLabel">BUY SCORE</div>
-      <div class="scoreNumber buy" id="buyScore">—</div>
-    </div>
-
-    <div class="scoreItem">
-      <div class="scoreLabel">SELL SCORE</div>
-      <div class="scoreNumber sell" id="sellScore">—</div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- MTF -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    🧭 Multi-Timeframe Confirmation
-  </h3>
-
-  <div class="mtf" id="mtfBox">
-
-    <div class="mtfItem">
-      <div class="mtfTf">5 MIN</div>
-      <div class="mtfTrend">—</div>
-    </div>
-
-    <div class="mtfItem">
-      <div class="mtfTf">15 MIN</div>
-      <div class="mtfTrend">—</div>
-    </div>
-
-    <div class="mtfItem">
-      <div class="mtfTf">1 HOUR</div>
-      <div class="mtfTrend">—</div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- CONFIRMATIONS -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    ✅ Confirmations
-  </h3>
-
-  <div class="label">BUY CONFIRMATIONS</div>
-
-  <div id="buyReasons">
-    <div class="reason">
-      No confirmation
-    </div>
-  </div>
-
-  <br>
-
-  <div class="label">SELL CONFIRMATIONS</div>
-
-  <div id="sellReasons">
-    <div class="reason">
-      No confirmation
-    </div>
-  </div>
-
-</div>
-
-
-<!-- SCREENSHOT -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    📸 Quotex Screenshot Analyzer
-  </h3>
-
-  <div class="uploadBox">
-
-    <div class="signalMessage">
-      Take a screenshot of your Quotex chart and select it here.
-    </div>
-
-    <br>
-
-    <input
-      type="file"
-      id="chartImage"
-      accept="image/*"
-    >
-
-    <img
-      id="imagePreview"
-      class="preview hidden"
-      alt="Chart preview"
-    >
-
-    <br>
-
-    <button
-      class="smallBtn"
-      id="screenshotAnalyzeBtn"
-      style="width:100%;margin-top:8px"
-    >
-      🔍 ANALYZE SCREENSHOT
-    </button>
-
-  </div>
-
-  <div
-    id="screenshotResult"
-    class="reason"
-    style="margin-top:10px"
-  >
-    No screenshot analyzed yet.
-  </div>
-
-</div>
-
-
-<!-- AI -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    🤖 <span id="aiTitle">MD Shawon AI</span>
-  </h3>
-
-  <div class="chat" id="chatBox">
-
-    <div class="msg bot">
-      Assalamu Alaikum. I am MD Shawon AI. Ask me about the current market analysis.
-    </div>
-
-  </div>
-
-  <div class="chatRow">
-
-    <input
-      id="chatInput"
-      placeholder="Ask about market..."
-    >
-
-    <button
-      class="smallBtn voiceBtn"
-      id="voiceBtn"
-    >
-      🎤
-    </button>
-
-    <button
-      class="smallBtn"
-      id="sendBtn"
-    >
-      ➤
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- FLOATING -->
-
-<div class="card">
-
-  <h3 class="sectionTitle">
-    🔘 Floating Analysis Button
-  </h3>
-
-  <div class="metric">
-
-    <div class="metricName">
-      CURRENT STATUS
-    </div>
-
-    <div class="metricValue" id="floatingStatus">
-      ON
-    </div>
-
-  </div>
-
-  <br>
-
-  <div class="signalMessage">
-    The floating button triggers analysis only. It never clicks Quotex,
-    opens a trade, or places an automatic order.
-  </div>
-
-</div>
-
-
-<div class="footer">
-  Indicator-based market analysis only.<br>
-  Signals are not guaranteed profits or financial advice.
-</div>
-
-</div>
-
-
-<!-- FLOATING BUTTON -->
-
-<button
-  class="floating"
-  id="floatingBtn"
->
-  MS
-</button>
-
-
-<!-- SETTINGS DRAWER -->
-
-<div class="drawer" id="drawer">
-
-  <div class="drawerPanel">
-
-    <div class="drawerHeader">
-
-      <h2 style="margin:0">
-        ⚙️ Settings
-      </h2>
-
-      <button
-        class="close"
-        id="closeMenu"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="setting">
-
-      <div class="settingTitle">
-        PROFILE PHOTO
-      </div>
-
-      <input
-        type="file"
-        id="profileImage"
-        accept="image/*"
-      >
-
-    </div>
-
-
-    <div class="setting">
-
-      <div class="settingTitle">
-        APP NAME
-      </div>
-
-      <input
-        id="settingAppName"
-        value="MD Shawon Traders"
-      >
-
-    </div>
-
-
-    <div class="setting">
-
-      <div class="settingTitle">
-        AI BOT NAME
-      </div>
-
-      <input
-        id="settingBotName"
-        value="MD Shawon AI"
-      >
-
-    </div>
-
-
-    <div class="setting">
-
-      <div class="settingTitle">
-        AUTO ANALYZE BUTTON NAME
-      </div>
-
-      <input
-        id="settingAutoName"
-        value="⚡ AUTO ANALYZE"
-      >
-
-    </div>
-
-
-    <div class="setting">
-
-      <div class="settingTitle">
-        DEFAULT PAIR
-      </div>
-
-      <select id="settingPair">
-
+    <div class="field">
+      <label>Asset / Pair</label>
+      <select id="symbol">
         <option>EUR/USD</option>
         <option>GBP/USD</option>
         <option>USD/JPY</option>
@@ -1368,1739 +404,596 @@ textarea{
         <option>NZD/USD</option>
         <option>EUR/GBP</option>
         <option>EUR/JPY</option>
+        <option>EUR/CHF</option>
         <option>GBP/JPY</option>
+        <option>GBP/CHF</option>
+        <option>GBP/AUD</option>
+        <option>GBP/CAD</option>
+        <option>AUD/JPY</option>
+        <option>AUD/CAD</option>
+        <option>AUD/CHF</option>
+        <option>CAD/JPY</option>
+        <option>CAD/CHF</option>
+        <option>CHF/JPY</option>
+        <option>NZD/JPY</option>
         <option>XAU/USD</option>
         <option>XAG/USD</option>
         <option>BTC/USD</option>
         <option>ETH/USD</option>
-
+        <option>LTC/USD</option>
+        <option>XRP/USD</option>
+        <option>US30</option>
+        <option>NAS100</option>
+        <option>SPX500</option>
+        <option>GER30</option>
+        <option>UK100</option>
+        <option>JPN225</option>
       </select>
-
     </div>
 
+    <button class="auto" id="autoBtn">⚡ AUTO ANALYZE</button>
+  </section>
 
-    <div class="setting">
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">Market Intelligence</span>
+      <span class="section-badge" id="dataStatus">WAITING</span>
+    </div>
 
-      <div class="settingTitle">
-        DEFAULT TIMEFRAME
+    <div class="grid">
+      <div class="metric"><small>RSI</small><strong id="rsi">—</strong></div>
+      <div class="metric"><small>MOMENTUM</small><strong id="momentum">—</strong></div>
+      <div class="metric"><small>EMA 9</small><strong id="ema9">—</strong></div>
+      <div class="metric"><small>EMA 21</small><strong id="ema21">—</strong></div>
+      <div class="metric"><small>EMA 50</small><strong id="ema50">—</strong></div>
+      <div class="metric"><small>MACD</small><strong id="macd">—</strong></div>
+      <div class="metric"><small>ATR</small><strong id="atr">—</strong></div>
+      <div class="metric"><small>PRESSURE</small><strong id="pressure">—</strong></div>
+      <div class="metric"><small>SUPPORT</small><strong id="support">—</strong></div>
+      <div class="metric"><small>RESISTANCE</small><strong id="resistance">—</strong></div>
+      <div class="metric"><small>CANDLE</small><strong id="pattern">—</strong></div>
+      <div class="metric"><small>MTF TREND</small><strong id="trend">—</strong></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">💧 Market Liquidity</span>
+      <span class="section-badge" id="liqStatus">UNAVAILABLE</span>
+    </div>
+
+    <div class="liquidity-main">
+      <div class="liq-score" id="liqScore">—</div>
+      <div class="liq-info">
+        <strong id="liqCondition">Waiting</strong>
+        <p>Structural liquidity analysis from verified candle data</p>
       </div>
-
-      <select id="settingTf">
-
-        <option value="1min">1 MIN</option>
-        <option value="5min">5 MIN</option>
-        <option value="15min">15 MIN</option>
-        <option value="1h">1 HOUR</option>
-
-      </select>
-
     </div>
 
+    <div class="grid">
+      <div class="metric"><small>BUY-SIDE ZONE</small><strong id="buySide">—</strong></div>
+      <div class="metric"><small>SELL-SIDE ZONE</small><strong id="sellSide">—</strong></div>
+      <div class="metric"><small>NEAREST ZONE</small><strong id="nearestZone">—</strong></div>
+      <div class="metric"><small>LIQUIDITY SWEEP</small><strong id="sweep">—</strong></div>
+    </div>
+  </section>
 
-    <div class="setting">
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">Why this signal?</span>
+      <span class="section-badge">REASONS</span>
+    </div>
+    <ul class="reason" id="reasons">
+      <li>Run Auto Analyze to receive verified analysis.</li>
+    </ul>
+  </section>
 
-      <div class="switch">
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">Confirmation Matrix</span>
+      <span class="section-badge">MTF</span>
+    </div>
 
-        <div>
-          <div class="settingTitle">
-            VOICE ASSISTANT
-          </div>
+    <div class="confirm">
+      <div class="buy" id="buyConfirm">BUY • No confirmation</div>
+      <div class="sell" id="sellConfirm">SELL • No confirmation</div>
+      <div id="previous">Previous closed candle • —</div>
+    </div>
+  </section>
 
-          <div class="signalMessage">
-            Enable voice input
-          </div>
-        </div>
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">📷 Chart Screenshot</span>
+      <span class="section-badge">VISION</span>
+    </div>
 
-        <input
-          type="checkbox"
-          id="voiceToggle"
-          checked
-        >
-
+    <div class="screenshot">
+      Upload a Quotex chart screenshot for future verified vision analysis.
+      <br>
+      <label class="upload">
+        Select Screenshot
+        <input type="file" id="shot" accept="image/*">
+      </label>
+      <img id="preview" class="preview">
+      <div class="note">
+        Screenshot analysis will never invent a BUY/SELL result when a verified vision backend is unavailable.
       </div>
+    </div>
+  </section>
 
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">🤖 MD Shawon AI</span>
+      <span class="section-badge">ASSISTANT</span>
     </div>
 
-
-    <div class="setting">
-
-      <div class="switch">
-
-        <div>
-          <div class="settingTitle">
-            FLOATING BUTTON
-          </div>
-
-          <div class="signalMessage">
-            Show MS analysis button
-          </div>
-        </div>
-
-        <input
-          type="checkbox"
-          id="floatingToggle"
-          checked
-        >
-
-      </div>
-
+    <div class="chatlog" id="chatlog">
+      <div class="msg">Assalamu Alaikum. I’m MD Shawon AI. Ask me about the displayed market analysis.</div>
     </div>
 
-
-    <button
-      class="save"
-      id="saveSettings"
-    >
-      💾 SAVE SETTINGS
-    </button>
-
-    <button
-      class="danger"
-      id="resetSettings"
-    >
-      RESET APP SETTINGS
-    </button>
-
-  </div>
+    <div class="chatbox">
+      <input id="chatInput" placeholder="Ask about the analysis...">
+      <button id="sendBtn">➤</button>
+    </div>
+  </section>
 
 </div>
 
+<div class="bottom">
+  <button class="float" id="floatBtn">MS</button>
+</div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <strong>⚙ Settings</strong>
+      <button class="close" id="closeBtn">×</button>
+    </div>
+
+    <div class="setting">
+      <label>APP NAME</label>
+      <input id="setAppName" value="MD Shawon Traders">
+    </div>
+
+    <div class="setting">
+      <label>AI BOT NAME</label>
+      <input id="setBotName" value="MD Shawon AI">
+    </div>
+
+    <div class="setting">
+      <label>AUTO BUTTON NAME</label>
+      <input id="setAutoName" value="⚡ AUTO ANALYZE">
+    </div>
+
+    <div class="setting">
+      <label>DEFAULT PAIR</label>
+      <input id="setPair" value="EUR/USD">
+    </div>
+
+    <div class="setting">
+      <label>DEFAULT TIMEFRAME</label>
+      <input id="setTimeframe" value="1min">
+    </div>
+
+    <button class="save" id="saveSettings">SAVE SETTINGS</button>
+
+    <div class="note">
+      Floating MS is an analysis shortcut only. It does not click Quotex,
+      place trades, or automatically execute orders.
+      <br><br>
+      Market and liquidity values are shown only when verified backend data is available.
+      No guaranteed profit or win probability is provided.
+    </div>
+  </div>
+</div>
 
 <script>
+const API =
+"https://lingering-shadow-d7fb.hmshawonislam2.workers.dev";
 
-/* =====================================================
-   CONFIG
-===================================================== */
-
-const WORKER_URL =
-  "https://lingering-shadow-d7fb.hmshawonislam2.workers.dev";
-
-
-/* =====================================================
-   STATE
-===================================================== */
-
-let mode = "REAL";
-let interval = "1min";
-
-let settings = {
-  appName:"MD Shawon Traders",
-  botName:"MD Shawon AI",
-  autoName:"⚡ AUTO ANALYZE",
-  pair:"EUR/USD",
-  timeframe:"1min",
-  voice:true,
-  floating:true,
-  profile:""
-};
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-const $ = id =>
-  document.getElementById(id);
-
+const $ = id => document.getElementById(id);
 
 function setText(id,value){
-
-  const el = $(id);
-
-  if(el){
-    el.innerText =
-      value == null ||
-      value === ""
-        ? "—"
-        : String(value);
-  }
-
+  $(id).textContent =
+    value === null || value === undefined || value === ""
+    ? "—" : value;
 }
 
-
-function number(value,digits=6){
-
-  const n = Number(value);
-
-  if(!Number.isFinite(n))
-    return "—";
-
-  return n.toFixed(digits);
+function num(v,d=5){
+  if(v===null || v===undefined || Number.isNaN(Number(v))) return "—";
+  return Number(v).toFixed(d);
 }
 
+function resetMetrics(){
+  [
+    "rsi","momentum","ema9","ema21","ema50","macd","atr",
+    "pressure","support","resistance","pattern","trend"
+  ].forEach(x=>setText(x,"—"));
 
-function timeframeText(tf){
+  setText("liqScore","—");
+  setText("liqCondition","Waiting");
+  setText("buySide","—");
+  setText("sellSide","—");
+  setText("nearestZone","—");
+  setText("sweep","—");
 
-  if(tf === "1min")
-    return "1 MIN";
+  $("reasons").innerHTML =
+    "<li>Verified market data is required.</li>";
 
-  if(tf === "5min")
-    return "5 MIN";
-
-  if(tf === "15min")
-    return "15 MIN";
-
-  if(tf === "1h")
-    return "1 HOUR";
-
-  return tf;
+  $("buyConfirm").textContent="BUY • No confirmation";
+  $("sellConfirm").textContent="SELL • No confirmation";
+  $("previous").textContent="Previous closed candle • —";
 }
 
-
-function signalClass(signal){
-
-  const s =
-    String(signal || "")
-      .toUpperCase();
-
-  if(s === "BUY")
-    return "buy";
-
-  if(s === "SELL")
-    return "sell";
-
-  if(s === "STRONG BUY")
-    return "strongbuy";
-
-  if(s === "STRONG SELL")
-    return "strongsell";
-
-  return "wait";
-}
-
-
-function signalMessage(signal){
-
-  const s =
-    String(signal || "")
-      .toUpperCase();
-
-  if(s === "STRONG BUY")
-    return "Strong bullish confirmation detected.";
-
-  if(s === "BUY")
-    return "Bullish confirmation detected.";
-
-  if(s === "STRONG SELL")
-    return "Strong bearish confirmation detected.";
-
-  if(s === "SELL")
-    return "Bearish confirmation detected.";
-
-  return "No reliable trade confirmation.";
-}
-
-
-/* =====================================================
-   SETTINGS STORAGE
-===================================================== */
-
-function loadSettings(){
-
-  try{
-
-    const saved =
-      localStorage.getItem(
-        "mdShawonSettings"
-      );
-
-    if(saved){
-
-      settings =
-        Object.assign(
-          settings,
-          JSON.parse(saved)
-        );
-
-    }
-
-  }catch(e){
-
-    console.log(
-      "Settings load error",
-      e
-    );
-
-  }
-
-  applySettings();
-
-}
-
-
-function saveSettingsData(){
-
-  try{
-
-    localStorage.setItem(
-      "mdShawonSettings",
-      JSON.stringify(settings)
-    );
-
-  }catch(e){
-
-    console.log(
-      "Settings save error",
-      e
-    );
-
-  }
-
-}
-
-
-function applySettings(){
-
-  setText(
-    "appTitle",
-    settings.appName
-  );
-
-  setText(
-    "aiTitle",
-    settings.botName
-  );
-
-  setText(
-    "botSubtitle",
-    settings.botName +
-    " • AI Market Analysis"
-  );
-
-  $("autoBtn").innerText =
-    settings.autoName;
-
-  $("settingAppName").value =
-    settings.appName;
-
-  $("settingBotName").value =
-    settings.botName;
-
-  $("settingAutoName").value =
-    settings.autoName;
-
-  $("settingPair").value =
-    settings.pair;
-
-  $("settingTf").value =
-    settings.timeframe;
-
-  $("voiceToggle").checked =
-    settings.voice;
-
-  $("floatingToggle").checked =
-    settings.floating;
-
-  mode = "REAL";
-  interval = settings.timeframe;
-
-  $("symbol").value =
-    settings.pair;
-
-  document
-    .querySelectorAll(".tf")
-    .forEach(btn => {
-
-      btn.classList.toggle(
-        "active",
-        btn.dataset.tf === interval
-      );
-
-    });
-
-  $("floatingBtn").style.display =
-    settings.floating
-      ? "flex"
-      : "none";
-
-  $("floatingStatus").innerText =
-    settings.floating
-      ? "ON"
-      : "OFF";
-
-  if(settings.profile){
-
-    $("avatarBox").innerHTML =
-      `<img src="${settings.profile}" alt="Profile">`;
-
-  }else{
-
-    $("avatarBox").innerText =
-      "MS";
-
-  }
-
-}
-
-
-$("profileImage")
-.addEventListener(
-  "change",
-  event => {
-
-    const file =
-      event.target.files[0];
-
-    if(!file)
-      return;
-
-    const reader =
-      new FileReader();
-
-    reader.onload =
-      () => {
-
-        settings.profile =
-          reader.result;
-
-        applySettings();
-
-      };
-
-    reader.readAsDataURL(file);
-
-  }
-);
-
-
-$("saveSettings")
-.addEventListener(
-  "click",
-  () => {
-
-    settings.appName =
-      $("settingAppName").value.trim()
-      || "MD Shawon Traders";
-
-    settings.botName =
-      $("settingBotName").value.trim()
-      || "MD Shawon AI";
-
-    settings.autoName =
-      $("settingAutoName").value.trim()
-      || "⚡ AUTO ANALYZE";
-
-    settings.pair =
-      $("settingPair").value;
-
-    settings.timeframe =
-      $("settingTf").value;
-
-    settings.voice =
-      $("voiceToggle").checked;
-
-    settings.floating =
-      $("floatingToggle").checked;
-
-    saveSettingsData();
-    applySettings();
-
-    $("drawer").classList.remove("open");
-
-  }
-);
-
-
-$("resetSettings")
-.addEventListener(
-  "click",
-  () => {
-
-    localStorage.removeItem(
-      "mdShawonSettings"
-    );
-
-    settings = {
-      appName:"MD Shawon Traders",
-      botName:"MD Shawon AI",
-      autoName:"⚡ AUTO ANALYZE",
-      pair:"EUR/USD",
-      timeframe:"1min",
-      voice:true,
-      floating:true,
-      profile:""
-    };
-
-    applySettings();
-
-  }
-);
-
-
-/* =====================================================
-   MENU
-===================================================== */
-
-$("menuBtn")
-.addEventListener(
-  "click",
-  () => {
-
-    $("drawer")
-      .classList.add("open");
-
-  }
-);
-
-
-$("closeMenu")
-.addEventListener(
-  "click",
-  () => {
-
-    $("drawer")
-      .classList.remove("open");
-
-  }
-);
-
-
-$("drawer")
-.addEventListener(
-  "click",
-  event => {
-
-    if(event.target === $("drawer")){
-
-      $("drawer")
-        .classList.remove("open");
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   MODE
-===================================================== */
-
-$("realBtn")
-.addEventListener(
-  "click",
-  () => {
-
-    mode = "REAL";
-
-    $("realBtn")
-      .classList.add("active");
-
-    $("otcBtn")
-      .classList.remove("active");
-
-    setText(
-      "targetMode",
-      "REAL MARKET"
-    );
-
-    clearAnalysis();
-
-  }
-);
-
-
-$("otcBtn")
-.addEventListener(
-  "click",
-  () => {
-
-    mode = "OTC";
-
-    $("otcBtn")
-      .classList.add("active");
-
-    $("realBtn")
-      .classList.remove("active");
-
-    setText(
-      "targetMode",
-      "QUOTEX OTC"
-    );
-
-    clearAnalysis();
-
-    setSignal(
-      "WAIT",
-      "Verified Quotex OTC data is not connected.",
-      0
-    );
-
-    showError(
-      "OTC data is unavailable. No fake OTC signal will be generated."
-    );
-
-  }
-);
-
-
-/* =====================================================
-   TIMEFRAME
-===================================================== */
-
-document
-.querySelectorAll(".tf")
-.forEach(button => {
-
-  button.addEventListener(
-    "click",
-    () => {
-
-      document
-        .querySelectorAll(".tf")
-        .forEach(x =>
-          x.classList.remove("active")
-        );
-
-      button.classList.add("active");
-
-      interval =
-        button.dataset.tf;
-
-      setText(
-        "targetTf",
-        timeframeText(interval)
-      );
-
-      clearAnalysis();
-
-    }
-  );
-
-});
-
-
-/* =====================================================
-   SYMBOL
-===================================================== */
-
-$("symbol")
-.addEventListener(
-  "change",
-  () => {
-
-    setText(
-      "targetSymbol",
-      $("symbol").value
-    );
-
-    clearAnalysis();
-
-  }
-);
-
-
-/* =====================================================
-   AUTO
-===================================================== */
-
-$("autoBtn")
-.addEventListener(
-  "click",
-  analyze
-);
-
-
-$("floatingBtn")
-.addEventListener(
-  "click",
-  analyze
-);
-
-
-/* =====================================================
-   ANALYSIS
-===================================================== */
-
-async function analyze(){
-
-  const button =
-    $("autoBtn");
-
-  const symbol =
-    $("symbol").value;
-
-  setText(
-    "targetSymbol",
-    symbol
-  );
-
-  setText(
-    "targetTf",
-    timeframeText(interval)
-  );
-
-  setText(
-    "targetMode",
-    mode === "OTC"
-      ? "QUOTEX OTC"
-      : "REAL MARKET"
-  );
-
-  clearError();
-
-  if(mode === "OTC"){
-
-    setSignal(
-      "WAIT",
-      "Verified Quotex OTC data is not connected.",
-      0
-    );
-
-    showError(
-      "OTC data unavailable. The app will not invent an OTC signal."
-    );
-
+function renderLiquidity(l){
+  if(!l || l.available===false){
+    $("liqStatus").textContent="UNAVAILABLE";
+    resetLiquidity();
     return;
-
   }
 
-
-  button.disabled = true;
-
-  button.classList.add(
-    "loading"
-  );
-
-  button.innerText =
-    "⏳ ANALYZING...";
+  $("liqStatus").textContent=l.status || "UNKNOWN";
+  setText("liqScore",l.score ?? "—");
+  setText("liqCondition",l.condition || "—");
 
   setText(
-    "analysisStatus",
-    "ANALYZING..."
-  );
-
-
-  setSignal(
-    "WAIT",
-    "Fetching verified market data...",
-    0
-  );
-
-
-  try{
-
-    const response =
-      await fetch(
-        WORKER_URL +
-        "/market",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:JSON.stringify({
-
-            symbol:symbol,
-
-            interval:interval,
-
-            mode:"REAL",
-
-            style:"STRICT"
-
-          })
-
-        }
-      );
-
-
-    let data;
-
-    try{
-
-      data =
-        await response.json();
-
-    }catch(e){
-
-      throw new Error(
-        "Worker returned invalid JSON."
-      );
-
-    }
-
-
-    if(
-      !response.ok ||
-      !data ||
-      data.ok !== true
-    ){
-
-      throw new Error(
-        data?.message ||
-        data?.error ||
-        "Market analysis failed."
-      );
-
-    }
-
-
-    render(data);
-
-    setText(
-      "analysisStatus",
-      "COMPLETE"
-    );
-
-  }catch(error){
-
-    console.error(error);
-
-    setSignal(
-      "WAIT",
-      "Analysis unavailable.",
-      0
-    );
-
-    setText(
-      "analysisStatus",
-      "ERROR"
-    );
-
-    showError(
-      "❌ " +
-      (
-        error.message ||
-        "Market analysis failed."
-      )
-    );
-
-  }finally{
-
-    button.disabled = false;
-
-    button.classList.remove(
-      "loading"
-    );
-
-    button.innerText =
-      settings.autoName;
-
-  }
-
-}
-
-
-/* =====================================================
-   RENDER
-===================================================== */
-
-function render(data){
-
-  setSignal(
-    data.signal || "WAIT",
-    signalMessage(data.signal),
-    Number(data.strength || 0)
-  );
-
-
-  setText(
-    "livePrice",
-    number(data.livePrice)
-  );
-
-  setText(
-    "trend",
-    data.trend
-  );
-
-  setText(
-    "rsi",
-    number(data.rsi,2)
-  );
-
-  setText(
-    "momentum",
-    data.momentum
-  );
-
-  setText(
-    "ema9",
-    number(data.ema9)
-  );
-
-  setText(
-    "ema21",
-    number(data.ema21)
-  );
-
-  setText(
-    "ema50",
-    number(data.ema50)
-  );
-
-
-  const macd =
-    data.macd || {};
-
-  setText(
-    "macd",
-    macd.histogram != null
-      ? number(
-          macd.histogram,
-          6
-        )
+    "buySide",
+    l.buySide && l.buySide.price != null
+      ? num(l.buySide.price)
       : "—"
   );
 
-
   setText(
-    "atr",
-    number(data.atr)
+    "sellSide",
+    l.sellSide && l.sellSide.price != null
+      ? num(l.sellSide.price)
+      : "—"
   );
 
-  setText(
-    "pressure",
-    data.pressure
-  );
+  if(l.nearestZone){
+    setText(
+      "nearestZone",
+      (l.nearestZone.side || "") +
+      " " +
+      num(l.nearestZone.price)
+    );
+  }else{
+    setText("nearestZone","—");
+  }
+
+  if(l.sweep){
+    setText("sweep",
+      l.sweep.type || l.sweep.condition || "NONE"
+    );
+  }else{
+    setText("sweep","NONE");
+  }
+}
+
+function resetLiquidity(){
+  setText("liqScore","—");
+  setText("liqCondition","Data unavailable");
+  setText("buySide","—");
+  setText("sellSide","—");
+  setText("nearestZone","—");
+  setText("sweep","—");
+}
+
+function renderData(data){
+
+  if(!data || data.ok===false){
+    $("dataStatus").textContent="ERROR";
+    $("price").textContent="—";
+    resetMetrics();
+    return;
+  }
+
+  $("dataStatus").textContent="VERIFIED";
+  $("price").textContent =
+    data.price ?? data.live?.price ?? "—";
+
+  $("priceSub").textContent =
+    `${$("symbol").value} • ${$("interval").value} • Twelve Data`;
+
+  const a = data.analysis || data.indicators || data;
+
+  setText("rsi",a.rsi ?? a.RSI);
+  setText("momentum",a.momentum ?? a.MOMENTUM);
+  setText("ema9",a.ema9 ?? a.EMA9);
+  setText("ema21",a.ema21 ?? a.EMA21);
+  setText("ema50",a.ema50 ?? a.EMA50);
+  setText("macd",a.macd ?? a.MACD);
+  setText("atr",a.atr ?? a.ATR);
+  setText("pressure",a.pressure ?? a.previousPressure);
+  setText("support",a.support ?? a.SUPPORT);
+  setText("resistance",a.resistance ?? a.RESISTANCE);
+  setText("pattern",a.pattern ?? a.candlePattern);
+  setText("trend",a.trend ?? a.mtfTrend);
+
+  const signal =
+    data.signal ||
+    data.decision ||
+    data.result ||
+    "WAIT";
+
+  $("signal").textContent=signal;
+  $("signal").className="signal-value "+signal.replace(/\s/g,"");
 
   setText(
-    "support",
-    number(data.support)
+    "score",
+    data.confirmationStrength
+      ? "Strength: "+data.confirmationStrength
+      : data.confirmationScore != null
+        ? "Score: "+data.confirmationScore
+        : "Confirmation: —"
   );
 
-  setText(
-    "resistance",
-    number(data.resistance)
-  );
+  renderLiquidity(data.liquidity);
 
-  setText(
-    "pattern",
-    data.pattern
-  );
+  const reasons =
+    data.reasons ||
+    data.reason ||
+    a.reasons ||
+    [];
 
+  $("reasons").innerHTML="";
+
+  if(Array.isArray(reasons) && reasons.length){
+    reasons.forEach(r=>{
+      const li=document.createElement("li");
+      li.textContent=r;
+      $("reasons").appendChild(li);
+    });
+  }else{
+    const li=document.createElement("li");
+    li.textContent="No additional confirmation returned.";
+    $("reasons").appendChild(li);
+  }
 
   const previous =
-    data.previousCandle || "—";
+    data.previousCandle ||
+    data.previous ||
+    a.previousCandle;
 
-  setText(
-    "previousCandle",
-    previous
-  );
-
-  setText(
-    "candleStrength",
-    candleStrength(previous)
-  );
-
-  setText(
-    "closedCandles",
-    data.closedCandles
-  );
-
-
-  setText(
-    "buyScore",
-    data.buyScore
-  );
-
-  setText(
-    "sellScore",
-    data.sellScore
-  );
-
-
-  renderReasons(
-    data.reasons || []
-  );
-
-
-  renderMTF(
-    data.mtf || {}
-  );
-
-
-  renderLiquidity(
-    data
-  );
-
-}
-
-
-/* =====================================================
-   SIGNAL
-===================================================== */
-
-function setSignal(
-  signal,
-  message,
-  strength
-){
-
-  const card =
-    $("signalCard");
-
-  card.className =
-    "card signal " +
-    signalClass(signal);
-
-  $("signal").innerText =
-    signal;
-
-  $("signalMessage").innerText =
-    message;
-
-  $("strength").innerText =
-    Number(strength) > 0
-      ? Number(strength)
-      : "—";
-
-}
-
-
-/* =====================================================
-   LIQUIDITY
-===================================================== */
-
-function renderLiquidity(data){
-
-  /*
-    The Worker can later return verified liquidity fields.
-
-    Supported future fields:
-    data.liquidity.score
-    data.liquidity.status
-    data.liquidity.condition
-    data.liquidity.buySide
-    data.liquidity.sellSide
-    data.liquidity.nearestZone
-    data.liquidity.sweep
-  */
-
-  const liq =
-    data.liquidity || null;
-
-  if(!liq){
-
-    setText(
-      "liquidityScore",
-      "—"
-    );
-
-    setText(
-      "liquidityCondition",
-      "DATA UNAVAILABLE"
-    );
-
-    setText(
-      "buyLiquidity",
-      "—"
-    );
-
-    setText(
-      "sellLiquidity",
-      "—"
-    );
-
-    setText(
-      "nearestLiquidity",
-      "—"
-    );
-
-    setText(
-      "liquiditySweep",
-      "—"
-    );
-
-    setText(
-      "liquidityStatus",
-      "WAITING"
-    );
-
-    return;
-
+  if(previous){
+    $("previous").textContent =
+      "Previous closed candle • "+
+      (typeof previous==="string"
+        ? previous
+        : previous.direction ||
+          previous.pressure ||
+          "AVAILABLE");
   }
 
+  const buys =
+    data.buyConfirmations ||
+    data.confirmations?.buy ||
+    [];
 
-  setText(
-    "liquidityScore",
-    liq.score
-  );
+  const sells =
+    data.sellConfirmations ||
+    data.confirmations?.sell ||
+    [];
 
-  setText(
-    "liquidityCondition",
-    liq.condition
-  );
+  $("buyConfirm").textContent =
+    "BUY • "+
+    (Array.isArray(buys) && buys.length
+      ? buys.join(" • ")
+      : "No confirmation");
 
-  setText(
-    "buyLiquidity",
-    liq.buySide
-  );
-
-  setText(
-    "sellLiquidity",
-    liq.sellSide
-  );
-
-  setText(
-    "nearestLiquidity",
-    liq.nearestZone
-  );
-
-  setText(
-    "liquiditySweep",
-    liq.sweep
-  );
-
-  setText(
-    "liquidityStatus",
-    liq.status || "AVAILABLE"
-  );
-
+  $("sellConfirm").textContent =
+    "SELL • "+
+    (Array.isArray(sells) && sells.length
+      ? sells.join(" • ")
+      : "No confirmation");
 }
 
-
-/* =====================================================
-   REASONS
-===================================================== */
-
-function renderReasons(reasons){
-
-  const buy =
-    $("buyReasons");
-
-  const sell =
-    $("sellReasons");
-
-  buy.innerHTML = "";
-  sell.innerHTML = "";
-
-
-  if(!Array.isArray(reasons) ||
-     reasons.length === 0){
-
-    buy.innerHTML =
-      '<div class="reason">No confirmation</div>';
-
-    sell.innerHTML =
-      '<div class="reason">No confirmation</div>';
-
-    return;
-
-  }
-
-
-  const buyReasons =
-    reasons.filter(
-      x =>
-        /bullish|buyer|buy|EMA 9 >|MACD bullish/i
-          .test(String(x))
-    );
-
-
-  const sellReasons =
-    reasons.filter(
-      x =>
-        /bearish|seller|sell|EMA 9 <|MACD bearish/i
-          .test(String(x))
-    );
-
-
-  addReasons(
-    buy,
-    buyReasons
-  );
-
-  addReasons(
-    sell,
-    sellReasons
-  );
-
-}
-
-
-function addReasons(
-  box,
-  reasons
-){
-
-  if(!reasons.length){
-
-    box.innerHTML =
-      '<div class="reason">No confirmation</div>';
-
-    return;
-
-  }
-
-
-  reasons
-    .slice(0,8)
-    .forEach(reason => {
-
-      const div =
-        document.createElement("div");
-
-      div.className =
-        "reason";
-
-      div.innerText =
-        "• " + reason;
-
-      box.appendChild(div);
-
-    });
-
-}
-
-
-/* =====================================================
-   MTF
-===================================================== */
-
-function renderMTF(mtf){
-
-  const box =
-    $("mtfBox");
-
-  box.innerHTML = "";
-
-
-  [
-    ["5min","5 MIN"],
-    ["15min","15 MIN"],
-    ["1h","1 HOUR"]
-  ]
-  .forEach(
-    ([key,label]) => {
-
-      const item =
-        mtf[key];
-
-      const trend =
-        item?.trend ||
-        "UNKNOWN";
-
-      const div =
-        document.createElement("div");
-
-      div.className =
-        "mtfItem";
-
-      div.innerHTML =
-        `
-        <div class="mtfTf">
-          ${label}
-        </div>
-
-        <div class="mtfTrend">
-          ${trend}
-        </div>
-        `;
-
-      box.appendChild(div);
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   CANDLE
-===================================================== */
-
-function candleStrength(value){
-
-  if(!value)
-    return "—";
-
-  const v =
-    String(value)
-      .toUpperCase();
-
-  if(
-    v.includes("STRONG")
-  )
-    return "STRONG";
-
-  if(
-    v.includes("BUYER") ||
-    v.includes("SELLER")
-  )
-    return "MEDIUM";
-
-  return "NEUTRAL";
-
-}
-
-
-/* =====================================================
-   CLEAR
-===================================================== */
-
-function clearAnalysis(){
-
-  [
-    "livePrice",
-    "trend",
-    "rsi",
-    "momentum",
-    "ema9",
-    "ema21",
-    "ema50",
-    "macd",
-    "atr",
-    "pressure",
-    "support",
-    "resistance",
-    "pattern",
-    "previousCandle",
-    "candleStrength",
-    "closedCandles",
-    "buyScore",
-    "sellScore",
-    "liquidityScore",
-    "buyLiquidity",
-    "sellLiquidity",
-    "nearestLiquidity",
-    "liquiditySweep"
-  ]
-  .forEach(
-    id =>
-      setText(id,"—")
-  );
-
-
-  setText(
-    "liquidityCondition",
-    "DATA UNAVAILABLE"
-  );
-
-  setText(
-    "liquidityStatus",
-    "WAITING"
-  );
-
-
-  $("buyReasons").innerHTML =
-    '<div class="reason">No confirmation</div>';
-
-  $("sellReasons").innerHTML =
-    '<div class="reason">No confirmation</div>';
-
-
-  renderMTF({});
-
-
-  setSignal(
-    "WAIT",
-    "Ready for analysis",
-    0
-  );
-
-}
-
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-function showError(message){
-
-  $("errorBox").innerText =
-    message;
-
-  $("errorBox")
-    .classList.remove("hidden");
-
-}
-
-
-function clearError(){
-
-  $("errorBox")
-    .classList.add("hidden");
-
-}
-
-
-/* =====================================================
-   SCREENSHOT
-===================================================== */
-
-$("chartImage")
-.addEventListener(
-  "change",
-  event => {
-
-    const file =
-      event.target.files[0];
-
-    if(!file)
-      return;
-
-    const reader =
-      new FileReader();
-
-    reader.onload =
-      () => {
-
-        $("imagePreview").src =
-          reader.result;
-
-        $("imagePreview")
-          .classList.remove("hidden");
-
-        setText(
-          "screenshotResult",
-          "Screenshot loaded. Press ANALYZE SCREENSHOT."
-        );
-
-      };
-
-    reader.readAsDataURL(file);
-
-  }
-);
-
-
-$("screenshotAnalyzeBtn")
-.addEventListener(
-  "click",
-  async () => {
-
-    const file =
-      $("chartImage")
-        .files[0];
-
-    if(!file){
-
-      setText(
-        "screenshotResult",
-        "Please select a Quotex chart screenshot first."
-      );
-
-      return;
-
-    }
-
-
-    /*
-      Screenshot vision backend is intentionally not faked.
-
-      Later this button can send the image to a secure
-      server-side vision model without exposing any secret
-      API key inside this APK.
-    */
-
-    setText(
-      "screenshotResult",
-      "Screenshot received. Verified AI vision analysis backend is not connected yet, so no fake BUY/SELL result is shown."
-    );
-
-  }
-);
-
-
-/* =====================================================
-   CHAT
-===================================================== */
-
-function addChat(
-  text,
-  type
-){
-
-  const div =
-    document.createElement("div");
-
-  div.className =
-    "msg " + type;
-
-  div.innerText =
-    text;
-
-  $("chatBox")
-    .appendChild(div);
-
-  $("chatBox").scrollTop =
-    $("chatBox").scrollHeight;
-
-}
-
-
-$("sendBtn")
-.addEventListener(
-  "click",
-  sendChat
-);
-
-
-$("chatInput")
-.addEventListener(
-  "keydown",
-  event => {
-
-    if(event.key === "Enter"){
-
-      event.preventDefault();
-
-      sendChat();
-
-    }
-
-  }
-);
-
-
-async function sendChat(){
-
-  const input =
-    $("chatInput");
-
-  const message =
-    input.value.trim();
-
-  if(!message)
-    return;
-
-  addChat(
-    message,
-    "user"
-  );
-
-  input.value = "";
-
-  addChat(
-    "Thinking...",
-    "bot"
-  );
-
+async function analyze(){
+
+  const btn=$("autoBtn");
+  btn.disabled=true;
+  btn.textContent="⏳ ANALYZING...";
+
+  $("dataStatus").textContent="LOADING";
+  $("signal").textContent="WAIT";
+  $("signal").className="signal-value WAIT";
 
   try{
 
-    const response =
-      await fetch(
-        WORKER_URL + "/chat",
-        {
-          method:"POST",
+    const body={
+      mode:$("mode").value,
+      symbol:$("symbol").value,
+      interval:$("interval").value
+    };
 
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
+    const response=await fetch(API+"/market",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(body)
+    });
 
-          body:JSON.stringify({
-            message
-          })
+    const data=await response.json();
 
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    const chat =
-      $("chatBox");
-
-    const last =
-      chat.lastElementChild;
-
-    if(
-      last &&
-      last.classList.contains("bot")
-    ){
-
-      last.remove();
-
-    }
-
-
-    if(
-      response.ok &&
-      data &&
-      data.ok
-    ){
-
-      addChat(
-        data.reply ||
-        data.message ||
-        "No response.",
-        "bot"
-      );
-
-    }else{
-
-      addChat(
-        "AI chat is currently unavailable. Market analysis can still work through the secure Worker.",
-        "bot"
-      );
-
-    }
+    renderData(data);
 
   }catch(error){
 
-    const chat =
-      $("chatBox");
+    $("dataStatus").textContent="OFFLINE";
+    $("price").textContent="—";
+    resetMetrics();
 
-    const last =
-      chat.lastElementChild;
+    $("reasons").innerHTML=
+      "<li>Unable to reach the verified analysis backend.</li>"+
+      "<li>No fake market value was generated.</li>";
 
-    if(
-      last &&
-      last.classList.contains("bot")
-    ){
+  }finally{
 
-      last.remove();
-
-    }
-
-    addChat(
-      "AI connection unavailable right now.",
-      "bot"
-    );
-
+    btn.disabled=false;
+    btn.textContent=
+      localStorage.getItem("autoName") ||
+      "⚡ AUTO ANALYZE";
   }
-
 }
 
+$("autoBtn").onclick=analyze;
 
-/* =====================================================
-   VOICE
-===================================================== */
+$("mode").onchange=()=>{
+  $("modeBadge").textContent=$("mode").value;
+};
 
-let recognition = null;
+$("shot").onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
 
+  const url=URL.createObjectURL(file);
+  $("preview").src=url;
+  $("preview").style.display="block";
+};
 
-function setupVoice(){
+$("menuBtn").onclick=()=>{
+  $("drawer").classList.add("open");
+};
 
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+$("closeBtn").onclick=()=>{
+  $("drawer").classList.remove("open");
+};
 
-  if(!SpeechRecognition){
+$("drawer").onclick=e=>{
+  if(e.target===$("drawer"))
+    $("drawer").classList.remove("open");
+};
 
-    $("voiceBtn").style.opacity =
-      ".45";
+$("saveSettings").onclick=()=>{
 
-    return;
+  localStorage.setItem(
+    "appName",$("setAppName").value
+  );
 
+  localStorage.setItem(
+    "botName",$("setBotName").value
+  );
+
+  localStorage.setItem(
+    "autoName",$("setAutoName").value
+  );
+
+  localStorage.setItem(
+    "pair",$("setPair").value
+  );
+
+  localStorage.setItem(
+    "timeframe",$("setTimeframe").value
+  );
+
+  applySettings();
+
+  $("drawer").classList.remove("open");
+};
+
+function applySettings(){
+
+  const appName =
+    localStorage.getItem("appName") ||
+    "MD Shawon Traders";
+
+  const autoName =
+    localStorage.getItem("autoName") ||
+    "⚡ AUTO ANALYZE";
+
+  $("appName").textContent=appName;
+  $("autoBtn").textContent=autoName;
+
+  const pair=localStorage.getItem("pair");
+  if(pair){
+    for(const o of $("symbol").options){
+      if(o.value===pair){
+        $("symbol").value=pair;
+        break;
+      }
+    }
   }
 
-
-  recognition =
-    new SpeechRecognition();
-
-  recognition.lang =
-    "bn-BD";
-
-  recognition.continuous =
-    false;
-
-  recognition.interimResults =
-    false;
-
-
-  recognition.onstart =
-    () => {
-
-      addChat(
-        "🎤 শুনছি... বলুন।",
-        "bot"
-      );
-
-    };
-
-
-  recognition.onresult =
-    event => {
-
-      const text =
-        event.results[0][0].transcript;
-
-      $("chatInput").value =
-        text;
-
-      sendChat();
-
-    };
-
-
-  recognition.onerror =
-    () => {
-
-      addChat(
-        "🎤 Voice input পাওয়া যায়নি।",
-        "bot"
-      );
-
-    };
-
+  const tf=localStorage.getItem("timeframe");
+  if(tf){
+    for(const o of $("interval").options){
+      if(o.value===tf){
+        $("interval").value=tf;
+        break;
+      }
+    }
+  }
 }
 
+$("sendBtn").onclick=sendChat;
 
-$("voiceBtn")
-.addEventListener(
-  "click",
-  () => {
+$("chatInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter")sendChat();
+});
 
-    if(!settings.voice){
+async function sendChat(){
 
-      addChat(
-        "Voice Assistant is disabled in Settings.",
-        "bot"
-      );
+  const input=$("chatInput");
+  const text=input.value.trim();
+  if(!text)return;
 
-      return;
+  const log=$("chatlog");
 
-    }
+  const me=document.createElement("div");
+  me.className="msg me";
+  me.textContent=text;
+  log.appendChild(me);
 
+  input.value="";
 
-    if(!recognition){
+  try{
 
-      addChat(
-        "এই ব্রাউজারে Voice Recognition পাওয়া যাচ্ছে না।",
-        "bot"
-      );
+    const r=await fetch(API+"/chat",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        message:text,
+        context:{
+          symbol:$("symbol").value,
+          interval:$("interval").value,
+          mode:$("mode").value,
+          signal:$("signal").textContent
+        }
+      })
+    });
 
-      return;
+    const data=await r.json();
 
-    }
+    const bot=document.createElement("div");
+    bot.className="msg";
+    bot.textContent=
+      data.reply ||
+      data.message ||
+      "AI chat backend is currently unavailable.";
 
+    log.appendChild(bot);
 
-    try{
+  }catch(e){
 
-      recognition.start();
+    const bot=document.createElement("div");
+    bot.className="msg";
+    bot.textContent=
+      "AI chat backend is currently unavailable.";
 
-    }catch(e){
-
-      console.log(e);
-
-    }
-
+    log.appendChild(bot);
   }
-);
 
+  log.scrollTop=log.scrollHeight;
+}
 
-/* =====================================================
-   START
-===================================================== */
+$("floatBtn").onclick=analyze;
 
-loadSettings();
+applySettings();
 
-setupVoice();
-
-setText(
-  "targetSymbol",
-  $("symbol").value
-);
-
-setText(
-  "targetTf",
-  timeframeText(interval)
-);
-
-setText(
-  "targetMode",
-  "REAL MARKET"
-);
-
+$("modeBadge").textContent=$("mode").value;
 </script>
 
 </body>
